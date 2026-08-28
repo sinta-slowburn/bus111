@@ -1,36 +1,31 @@
-# CROWDCON - Singapore Crowd Intelligence Application
-## Master Prompt & System Architecture Specification
+# ---- R : ROLE ------------------------------
+You are a senior front end developer with expertise in vanilla JavaScript, responsive UI and serverless functions on Vercel. You follow material design and hold every element to WCAG 2.1 AA.
 
----
+# ---- G : GOAL ------------------------------
+I am planning a day trip out in Singapore and my considerations are:
+1. I am trying to avoid crowded places.
+2. I want to see which areas are still open for more visitors.
+3. Is the train going to be packed? Should I take the bus? How's the traffic? Is there any accident/jam.
+4. Knowing localised weather helps me.
 
-### 1. Role & Engineering Profile
-- **Role:** Senior Front-End Developer & Product Engineer.
-- **Specialisation:**
-  - Vanilla JavaScript (ES6+) with zero framework dependencies.
-  - Semantic, accessible HTML5 with WCAG 2.1 AA compliance.
-  - Responsive mobile-first UI development in Neo-Brutalism ("Electric Grit") design system.
-  - Vercel Serverless Functions (`api/weather.js`, `api/bus.js`) and Express runtime compatibility.
-  - Live API integration with LTA DataMall BusArrivalv2 and NEA 2-Hour Weather via data.gov.sg.
+Build a mobile-responsive web app with:
+1. A dynamic and visual map that displays weather data and live telemetry over the map, with real-time data pulled from weather API.
+2. Include user-selectable list of locations in Singapore, by bus stops, train stations and locations.
+3. Visual panels for bus arrivals, train operations, and localised weather forecasting with area selector.
 
----
+# ---- O : OUTPUT ----------------------------
+Deliver configuration and source files: index.html, styles.css, app.js, api/bus.js, api/weather.js, api/train.js, masterprompt.md.
+Semantic HTML5, CSS Grid + Flexbox, mobile-first, breakpoints at 768px / 1100px.
+Comment every function thoroughly.
 
-### 2. Live Telemetry Architecture
-1. **Live Weather (`/api/weather`)**: Fetches live 2-hour regional weather forecasts from `https://api-open.data.gov.sg/v2/real-time/api/two-hr-forecast`. Source: NEA via data.gov.sg.
-2. **Live Bus Arrivals (`/api/bus`)**: Proxies live bus arrival times and crowding telemetry (`SEA`, `SDA`, `LSD`) from LTA DataMall (`BusArrivalv2`) via secure server-side proxy using `LTA_ACCOUNT_KEY`. Validates 5-digit bus stop code server-side and client-side.
-3. **Rule-Based Advice ("Should You Go?")**: Computed from fetched `Load` values (`LSD`, `SDA`, `SEA`, `Unknown`). Rule-based, not AI generated.
+# ---- G : GUARDRAILS ------------------------
+- Do NOT use React, Vue or Angular (vanilla JavaScript / HTML / CSS SPA).
+- Do NOT write inline styles or inline event handlers.
+- Do NOT put API keys in client code or in any public VITE_ variables—they are read only on the server-side (`api/`).
+- Do NOT invent APIs; use actual LTA DataMall and NEA data.gov.sg endpoints.
+- Validate every user input server-side.
 
----
-
-### 3. Environment Variables
-```env
-# .env.example
-LTA_ACCOUNT_KEY=
-```
-- **Security Rule:** All secret keys (`LTA_ACCOUNT_KEY`) are accessed strictly in server-side backend logic (`api/*.js` / `server.ts`) and are NEVER exposed to the browser client.
-
----
-
-### 4. Deployment & Start Commands
-- **Dev Server:** `npm run dev` (Boots Express + Vite on port 3000)
-- **Production Build:** `npm run build`
-- **Production Start:** `npm start` (Runs `node dist/server.cjs`)
+# ---- C : CONTEXT ---------------------------
+Audience: business professionals, strong HTML/CSS, limited JS.
+Environment: built in Google AI Studio, versioned on GitHub, hosted on Vercel/Cloud Run.
+Purpose: Live public transit & weather telemetry dashboard for Singapore.

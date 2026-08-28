@@ -1660,4 +1660,10 @@ body {
   }
 }
 
+@media (min-width: 768px) and (max-width: 1099px) {
+  #main-content > article.brutalist-card:nth-child(3) {
+    grid-column: 1 / -1 !important;
+  }
+}
+
 

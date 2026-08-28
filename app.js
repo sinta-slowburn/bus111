@@ -183,7 +183,7 @@ function setupLiveBusPanel() {
         li.innerHTML = `
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
             <div>
-              <span style="font-weight:900; font-size:1.125rem; background:var(--color-primary); color:var(--color-on-primary); padding:2px 6px; border-radius:4px; margin-right:8px;">${svc.serviceNo}</span>
+              <span style="font-weight:900; font-size:1.125rem; background:var(--color-primary); color:var(--color-on-primary); padding:2px 6px; margin-right:8px;">${svc.serviceNo}</span>
               <span style="font-weight:700;">Next Bus: ${nextMins}</span>
               <div style="font-size:0.75rem; color:var(--color-on-surface-variant); margin-top:2px;">Subsequent: ${next2Mins}, ${next3Mins}</div>
             </div>
@@ -192,7 +192,7 @@ function setupLiveBusPanel() {
               <span>${svc.nextBus.load}</span>
             </div>
           </div>
-          <div style="background:var(--color-surface-container); padding:8px 12px; border-radius:4px; font-size:0.875rem; font-weight:700;">
+          <div style="background:var(--color-surface-container); padding:8px 12px; font-size:0.875rem; font-weight:700;">
             Should You Go? ${svc.nextBus.advice}
             <div style="font-size:0.7rem; color:var(--color-on-surface-variant); font-weight:400; margin-top:2px;">Rule based, not AI generated.</div>
           </div>
