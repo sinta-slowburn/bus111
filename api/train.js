@@ -14,6 +14,7 @@ export default async function handler(req, res) {
 
   const urlObj = new URL(req.url, `http://${req.headers.host || "localhost"}`);
   const line = (urlObj.searchParams.get("line") || "").trim().toUpperCase();
+  const debug = urlObj.searchParams.get("debug") === "1";
 
   const allowedLines = ["CCL", "CEL", "CGL", "DTL", "EWL", "NEL", "NSL", "BPL", "SLRT", "PLRT", "TEL"];
   if (!allowedLines.includes(line)) {
@@ -40,24 +41,29 @@ export default async function handler(req, res) {
     const data = await response.json();
     console.error("LTA PCDRealTime raw response keys:", Object.keys(data || {}));
 
-    const valueObj = data.value || data.Value || data || {};
-    const stationsRaw = valueObj.Stations || valueObj.stations || data.Stations || data.stations || [];
+    if (debug) {
+      return res.status(200).json(data);
+    }
 
-    const stations = (Array.isArray(stationsRaw) ? stationsRaw : []).map(st => {
+    const stationsRaw = Array.isArray(data.value) ? data.value : [];
+
+    const stations = stationsRaw.map(st => {
       const mapCrowd = (level) => {
         if (!level) return "Unknown";
         const code = String(level).trim();
-        if (code === "l" || code === "L") return "Low";
-        if (code === "m" || code === "M") return "Moderate";
-        if (code === "h" || code === "H") return "High";
-        if (code === "NA" || code === "na") return "No data";
+        if (code === "l") return "Low";
+        if (code === "m") return "Moderate";
+        if (code === "h") return "High";
+        if (code === "NA") return "No data";
         return "Unknown";
       };
 
       return {
-        stationID: st.StationID || st.stationID || st.StnCode || st.stnCode || "",
-        stationName: st.StationName || st.stationName || st.StnName || st.stnName || "Unknown Station",
-        crowdLevel: mapCrowd(st.CrowdLevel || st.crowdLevel || st.Level || st.level),
+        stationID: st.Station || "",
+        stationName: st.Station || "Unknown Station",
+        crowdLevel: mapCrowd(st.CrowdLevel),
+        startTime: st.StartTime || null,
+        endTime: st.EndTime || null,
       };
     });
 
