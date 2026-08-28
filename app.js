@@ -16,8 +16,7 @@ const SINGAPORE_LOCATIONS = [
 document.addEventListener("DOMContentLoaded", () => {
   setupLiveBusPanel();
   setupLiveTrainPanel();
-  const condText = document.getElementById("weather-condition-text");
-  if (condText) condText.textContent = "Enter a bus stop to see the local forecast.";
+  fetchLiveWeather();
   announceToScreenReader("");
 });
 
@@ -58,15 +57,23 @@ function showToast(title, message, type = "info") {
   }, 4000);
 }
 
-async function fetchLiveWeather(lat, lng, stopCode) {
+async function fetchLiveWeather(lat = null, lng = null, stopCode = null, selectedArea = null) {
   const condText = document.getElementById("weather-condition-text");
   const areaText = document.getElementById("weather-area-text");
+  const areaSelect = document.getElementById("weather-area-select");
   const footer = document.getElementById("weather-meta-footer");
 
-  if (!lat || !lng) return;
-
   try {
-    const res = await fetch(`/api/weather?lat=${lat}&lng=${lng}`);
+    let url = "/api/weather";
+    if (selectedArea) {
+      url = `/api/weather?area=${encodeURIComponent(selectedArea)}`;
+    } else if (lat !== null && lng !== null) {
+      url = `/api/weather?lat=${lat}&lng=${lng}`;
+    } else {
+      url = `/api/weather?area=City`;
+    }
+
+    const res = await fetch(url);
     const data = await res.json();
 
     if (!res.ok || !data.success) {
@@ -75,7 +82,36 @@ async function fetchLiveWeather(lat, lng, stopCode) {
 
     if (condText) condText.textContent = `${data.area} - ${data.forecast}`;
     if (areaText) {
-      areaText.textContent = `Nearest weather area to the approaching bus at stop ${stopCode}`;
+      if (lat !== null && lng !== null && stopCode) {
+        areaText.textContent = `Nearest weather area to the approaching bus at stop ${stopCode}`;
+      } else {
+        areaText.textContent = "";
+      }
+    }
+
+    if (areaSelect && data.areas && Array.isArray(data.areas)) {
+      areaSelect.style.display = "block";
+      areaSelect.innerHTML = "";
+      data.areas.forEach(a => {
+        const opt = document.createElement("option");
+        opt.value = a;
+        opt.textContent = a;
+        if (a === data.area) {
+          opt.selected = true;
+        }
+        areaSelect.appendChild(opt);
+      });
+      areaSelect.value = data.area;
+
+      if (!areaSelect.dataset.listenerAttached) {
+        areaSelect.addEventListener("change", () => {
+          const val = areaSelect.value;
+          if (val) {
+            fetchLiveWeather(null, null, null, val);
+          }
+        });
+        areaSelect.dataset.listenerAttached = "true";
+      }
     }
 
     if (footer) {

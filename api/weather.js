@@ -15,25 +15,7 @@ export default async function handler(req, res) {
   const urlObj = new URL(req.url, `http://${req.headers.host || "localhost"}`);
   const latParam = urlObj.searchParams.get("lat");
   const lngParam = urlObj.searchParams.get("lng");
-
-  let targetLat = null;
-  let targetLng = null;
-
-  if (latParam !== null || lngParam !== null) {
-    targetLat = Number(latParam);
-    targetLng = Number(lngParam);
-
-    if (
-      isNaN(targetLat) ||
-      isNaN(targetLng) ||
-      targetLat < 1.1 ||
-      targetLat > 1.5 ||
-      targetLng < 103.6 ||
-      targetLng > 104.1
-    ) {
-      return res.status(400).json({ success: false, error: "Invalid latitude or longitude coordinates." });
-    }
-  }
+  const areaParam = urlObj.searchParams.get("area");
 
   try {
     const response = await fetch("https://api-open.data.gov.sg/v2/real-time/api/two-hr-forecast", {
@@ -51,13 +33,41 @@ export default async function handler(req, res) {
     const items = data?.data?.items || [];
     const forecasts = items[0]?.forecasts || [];
     const areaMeta = data?.data?.area_metadata || [];
+    const areas = areaMeta.map(m => m.name).filter(Boolean);
 
-    if (targetLat !== null && targetLng !== null) {
-      // Find nearest area by straight-line distance
+    if (areaParam !== null && areaParam !== "") {
+      if (!areas.includes(areaParam)) {
+        return res.status(400).json({ success: false, error: "Invalid area name." });
+      }
+      const matchedForecast = forecasts.find(f => f.area === areaParam) || { area: areaParam, forecast: "Fair" };
+      return res.status(200).json({
+        success: true,
+        area: matchedForecast.area,
+        forecast: matchedForecast.forecast,
+        areas,
+        source: "NEA via data.gov.sg",
+        fetchedAt: new Date().toISOString(),
+      });
+    }
+
+    if (latParam !== null || lngParam !== null) {
+      const targetLat = Number(latParam);
+      const targetLng = Number(lngParam);
+
+      if (
+        isNaN(targetLat) ||
+        isNaN(targetLng) ||
+        targetLat < 1.1 ||
+        targetLat > 1.5 ||
+        targetLng < 103.6 ||
+        targetLng > 104.1
+      ) {
+        return res.status(400).json({ success: false, error: "Invalid latitude or longitude coordinates." });
+      }
+
       let nearestArea = "Singapore";
       let minDistance = Infinity;
 
-      // Build map of area name -> {lat, lng} from area_metadata
       const coordsMap = {};
       areaMeta.forEach(meta => {
         if (meta && meta.name && meta.label_location) {
@@ -86,14 +96,14 @@ export default async function handler(req, res) {
         success: true,
         area: matchedForecast.area,
         forecast: matchedForecast.forecast,
+        areas,
         source: "NEA via data.gov.sg",
         fetchedAt: new Date().toISOString(),
       });
     }
 
-    // Default behavior when no lat/lng supplied
-    const target = forecasts[0] || { area: "Singapore", forecast: "Fair" };
-    const areas = areaMeta.map(m => m.name).filter(Boolean);
+    // Default behavior when no lat/lng or area supplied
+    const target = forecasts.find(f => f.area === "City") || forecasts[0] || { area: "City", forecast: "Fair" };
 
     return res.status(200).json({
       success: true,
