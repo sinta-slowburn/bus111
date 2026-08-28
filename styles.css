@@ -1245,6 +1245,12 @@ body {
   transition: all 0.15s ease;
 }
 
+#btn-fetch-bus {
+  width: auto;
+  flex-shrink: 0;
+  padding: 12px 20px;
+}
+
 .btn-broadcast:hover {
   background-color: var(--color-secondary-fixed);
   color: var(--color-on-secondary-fixed);

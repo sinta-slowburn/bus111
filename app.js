@@ -198,11 +198,24 @@ function setupLiveBusPanel() {
 
   async function handleFetch() {
     hideDropdown();
-    const stopCode = input.value.trim();
-    if (!/^\d{5}$/.test(stopCode)) {
-      list.innerHTML = `<li class="hotspot-item" style="color:var(--color-error); font-weight:700;">Data unavailable: Please enter a valid 5-digit bus stop code or select a stop from suggestions (e.g. 03218).</li>`;
-      announceToScreenReader("Invalid bus stop code, must be 5 digits");
-      return;
+    const rawInput = input.value.trim();
+    let stopCode = rawInput;
+
+    if (!/^\d{5}$/.test(rawInput)) {
+      const query = rawInput.toLowerCase();
+      const match = busStops.find(s => 
+        s.code.toLowerCase() === query ||
+        s.name.toLowerCase().includes(query) ||
+        s.road.toLowerCase().includes(query)
+      );
+      if (match) {
+        stopCode = match.code;
+        input.value = match.code;
+      } else {
+        list.innerHTML = `<li class="hotspot-item" style="color:var(--color-error); font-weight:700;">Data unavailable: Bus stop not found. Please enter a valid 5-digit code, road name, or description.</li>`;
+        announceToScreenReader("Bus stop not found");
+        return;
+      }
     }
 
     list.innerHTML = `<li class="hotspot-item"><span class="hotspot-item-title">Fetching live telemetry for stop ${stopCode}...</span></li>`;
