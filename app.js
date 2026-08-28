@@ -200,17 +200,20 @@ function setupLiveBusPanel() {
     hideDropdown();
     const rawInput = input.value.trim();
     let stopCode = rawInput;
+    let matchedStop = null;
 
-    if (!/^\d{5}$/.test(rawInput)) {
+    if (/^\d{5}$/.test(rawInput)) {
+      matchedStop = busStops.find(s => s.code === rawInput);
+    } else {
       const query = rawInput.toLowerCase();
-      const match = busStops.find(s => 
+      matchedStop = busStops.find(s => 
         s.code.toLowerCase() === query ||
         s.name.toLowerCase().includes(query) ||
         s.road.toLowerCase().includes(query)
       );
-      if (match) {
-        stopCode = match.code;
-        input.value = match.code;
+      if (matchedStop) {
+        stopCode = matchedStop.code;
+        input.value = matchedStop.code;
       } else {
         list.innerHTML = `<li class="hotspot-item" style="color:var(--color-error); font-weight:700;">Data unavailable: Bus stop not found. Please enter a valid 5-digit code, road name, or description.</li>`;
         announceToScreenReader("Bus stop not found");
@@ -220,6 +223,13 @@ function setupLiveBusPanel() {
 
     list.innerHTML = `<li class="hotspot-item"><span class="hotspot-item-title">Fetching live telemetry for stop ${stopCode}...</span></li>`;
     announceToScreenReader(`Loading bus stop ${stopCode}`);
+
+    // Update weather immediately based on bus stop coordinates or fallback to City
+    if (matchedStop && typeof matchedStop.lat === "number" && typeof matchedStop.lng === "number") {
+      fetchLiveWeather(matchedStop.lat, matchedStop.lng, stopCode);
+    } else {
+      fetchLiveWeather(null, null, null, "City");
+    }
 
     try {
       const res = await fetch(`/api/bus?stop=${stopCode}`);
@@ -240,7 +250,8 @@ function setupLiveBusPanel() {
         footer.textContent = `Source: ${data.source} • Fetched at ${new Date(data.fetchedAt).toLocaleTimeString()}`;
       }
 
-      if (data.coordinates) {
+      // If matchedStop didn't have coordinates, fallback to data.coordinates if available
+      if ((!matchedStop || typeof matchedStop.lat !== "number") && data.coordinates) {
         fetchLiveWeather(data.coordinates.lat, data.coordinates.lng, stopCode);
       }
 
@@ -293,6 +304,52 @@ function setupLiveBusPanel() {
       handleFetch();
     }
   });
+
+  const btnNearMe = document.getElementById("btn-near-me");
+  if (btnNearMe) {
+    btnNearMe.addEventListener("click", () => {
+      if (!navigator.geolocation) {
+        showToast("Geolocation", "Geolocation is not supported by your browser", "error");
+        return;
+      }
+
+      announceToScreenReader("Finding your current location...");
+      showToast("Location", "Requesting your GPS location...", "info");
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const userLat = position.coords.latitude;
+          const userLng = position.coords.longitude;
+
+          let nearestStop = null;
+          let minDistance = Infinity;
+
+          busStops.forEach(stop => {
+            if (typeof stop.lat === "number" && typeof stop.lng === "number") {
+              const dist = Math.hypot(stop.lat - userLat, stop.lng - userLng);
+              if (dist < minDistance) {
+                minDistance = dist;
+                nearestStop = stop;
+              }
+            }
+          });
+
+          if (nearestStop) {
+            input.value = nearestStop.code;
+            showToast("Nearest Stop Found", `Found ${nearestStop.name} (${nearestStop.code})`, "success");
+            handleFetch();
+          } else {
+            showToast("Location Error", "No nearby bus stops found in dataset", "error");
+          }
+        },
+        (error) => {
+          console.error("Geolocation error:", error);
+          showToast("Location Error", "Unable to retrieve your location. Please check permissions.", "error");
+        },
+        { timeout: 10000, maximumAge: 60000 }
+      );
+    });
+  }
 }
 
 function setupLiveTrainPanel() {
