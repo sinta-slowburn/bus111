@@ -32,6 +32,7 @@
           <button role="tab" aria-selected="false" aria-controls="view-map" class="nav-tab-btn" id="tab-map" data-view="map">Map View</button>
           <button role="tab" aria-selected="false" aria-controls="view-analytics" class="nav-tab-btn" id="tab-analytics" data-view="analytics">Risk Analytics</button>
           <button role="tab" aria-selected="false" aria-controls="view-planner" class="nav-tab-btn" id="tab-planner" data-view="planner">AI Situation Advisor</button>
+          <button role="tab" aria-selected="false" aria-controls="view-comments" class="nav-tab-btn" id="tab-comments" data-view="comments">Discussions</button>
         </div>
       </div>
 
@@ -100,6 +101,12 @@
             <button class="side-menu-btn" id="side-btn-planner" data-view="planner">
               <span class="material-symbols-outlined" aria-hidden="true">auto_awesome</span>
               AI Situation Advisor
+            </button>
+          </li>
+          <li>
+            <button class="side-menu-btn" id="side-btn-comments" data-view="comments">
+              <span class="material-symbols-outlined" aria-hidden="true">forum</span>
+              Discussions & Feedback
             </button>
           </li>
         </ul>
@@ -584,6 +591,37 @@
                     Source: Verified LTA DataMall & NEA Singapore API Telemetry
                   </div>
                 </div>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <!-- ===================================================================
+             VIEW 5: DISCUSSIONS & COMMUNITY FEEDBACK (DISQUS)
+             =================================================================== -->
+        <section id="view-comments" class="view-content" role="tabpanel" aria-labelledby="tab-comments">
+          <header class="view-header">
+            <h1 class="font-headline-lg">Community & Operator Discussions</h1>
+            <p>Real-time ground reports, situation feedback, and peer communications powered by Disqus.</p>
+          </header>
+
+          <div class="bento-grid">
+            <article class="brutalist-card col-12">
+              <div class="card-header bg-primary">
+                <span class="font-label-sm">LIVE DISQUS THREAD</span>
+                <span class="status-pill live-badge">ONLINE</span>
+              </div>
+              <div class="card-body" style="padding: 24px; background: var(--color-surface-bright);">
+                <div id="disqus_thread"></div>
+                <script>
+                  (function() {
+                    var d = document, s = d.createElement('script');
+                    s.src = 'https://sinta888.disqus.com/embed.js';
+                    s.setAttribute('data-timestamp', +new Date());
+                    (d.head || d.body).appendChild(s);
+                  })();
+                </script>
+                <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
               </div>
             </article>
           </div>
