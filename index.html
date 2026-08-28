@@ -41,16 +41,18 @@
       <div class="card-body">
         <div class="form-group" style="margin-bottom: 16px; position: relative;">
           <label for="bus-stop-input" class="form-label">Bus Stop (Code, Road Name, or Description)</label>
-          <div style="display: flex; gap: 8px; margin-top: 8px; position: relative; align-items: center;">
-            <div style="position: relative; flex: 1; display: flex; align-items: center; min-width: 0;">
+          <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 8px; position: relative; width: 100%; box-sizing: border-box;">
+            <div style="position: relative; display: flex; align-items: center; width: 100%; box-sizing: border-box;">
               <span class="material-symbols-outlined" style="position: absolute; left: 14px; color: var(--color-on-surface-variant); font-size: 20px; pointer-events: none;">search</span>
-              <input type="text" id="bus-stop-input" class="form-control" placeholder="Search code (e.g. 03218) or road..." autocomplete="off" style="width: 100%; padding-left: 44px; height: 48px; border: var(--border-thick) solid var(--color-on-background); font-family: var(--font-body); font-weight: 700; background-color: var(--color-surface-bright);" />
+              <input type="text" id="bus-stop-input" class="form-control" placeholder="Search 5-digit code or road name..." autocomplete="off" style="width: 100%; padding-left: 44px; height: 48px; border: var(--border-thick) solid var(--color-on-background); font-family: var(--font-body); font-weight: 700; background-color: var(--color-surface-bright); box-sizing: border-box;" />
             </div>
-            <button type="button" id="btn-near-me" class="btn-broadcast" style="background-color: var(--color-surface-container-high); color: var(--color-on-surface); border: var(--border-thick) solid var(--color-on-background); height: 48px; padding: 0 14px; font-size: 0.85rem; display: inline-flex; align-items: center; justify-content: center; gap: 4px; cursor: pointer; flex-shrink: 0; box-shadow: var(--shadow-sm);" title="Find nearest bus stop using GPS">
-              <span class="material-symbols-outlined" style="font-size: 18px;">my_location</span>
-              <span class="hidden sm:inline">NEAR ME</span>
-            </button>
-            <button type="button" id="btn-fetch-bus" class="btn-broadcast" style="height: 48px; padding: 0 20px; font-size: 0.9rem; flex-shrink: 0; box-shadow: var(--shadow-sm); display: inline-flex; align-items: center; justify-content: center;">CHECK</button>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; box-sizing: border-box;">
+              <button type="button" id="btn-near-me" class="btn-broadcast" style="background-color: var(--color-surface-container-high); color: var(--color-on-surface); border: var(--border-thick) solid var(--color-on-background); height: 44px; font-size: 0.9rem; display: inline-flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; box-shadow: var(--shadow-sm); width: 100%; box-sizing: border-box;" title="Find nearest bus stop using GPS">
+                <span class="material-symbols-outlined" style="font-size: 18px;">my_location</span>
+                <span>NEAR ME</span>
+              </button>
+              <button type="button" id="btn-fetch-bus" class="btn-broadcast" style="height: 44px; font-size: 0.9rem; display: inline-flex; align-items: center; justify-content: center; box-shadow: var(--shadow-sm); width: 100%; box-sizing: border-box;">CHECK</button>
+            </div>
             <div id="bus-autocomplete-dropdown" style="display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: var(--color-surface-bright); border: var(--border-thick) solid var(--color-on-background); box-shadow: var(--shadow-md); z-index: 1000; max-height: 280px; overflow-y: auto;"></div>
           </div>
         </div>
