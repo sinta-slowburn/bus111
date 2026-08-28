@@ -4,7 +4,7 @@
  */
 
 import { stationNames } from "./data/station-names.js";
-import { busStops } from "./data/bus-stops.js";
+import { busStops as fallbackBusStops } from "./data/bus-stops.js";
 
 const SINGAPORE_LOCATIONS = [
   { id: "orchard", name: "Orchard Road Corridor", stationCode: "NS22 / TE14", type: "Shopping Corridor", lat: 1.3048, lng: 103.8318 },
@@ -58,6 +58,73 @@ function showToast(title, message, type = "info") {
   }, 4000);
 }
 
+let busStopDirectory = fallbackBusStops;
+let busStopDirectoryPromise = null;
+
+function normalizeBusStop(stop) {
+  return {
+    code: String(stop.code || ""),
+    name: String(stop.name || ""),
+    road: String(stop.road || ""),
+    lat: Number(stop.lat),
+    lng: Number(stop.lng),
+  };
+}
+
+function hasCoordinates(stop) {
+  return stop && typeof stop.lat === "number" && typeof stop.lng === "number" && !Number.isNaN(stop.lat) && !Number.isNaN(stop.lng);
+}
+
+async function loadBusStopDirectory() {
+  if (busStopDirectoryPromise) {
+    return busStopDirectoryPromise;
+  }
+
+  busStopDirectoryPromise = fetch("/api/bus-stops")
+    .then(async res => {
+      const data = await res.json();
+      if (!res.ok || !data.success || !Array.isArray(data.busStops)) {
+        throw new Error(data.error || "Failed to load bus stops");
+      }
+      busStopDirectory = data.busStops.map(normalizeBusStop).filter(stop => stop.code && stop.name && stop.road && hasCoordinates(stop));
+      return busStopDirectory;
+    })
+    .catch(err => {
+      console.error("Bus stop directory error:", err);
+      return busStopDirectory;
+    });
+
+  return busStopDirectoryPromise;
+}
+
+function findBusStopByCode(code) {
+  return busStopDirectory.find(stop => stop.code === code) || null;
+}
+
+function findBusStops(query, limit = 10) {
+  const q = query.trim().toLowerCase();
+  if (!q) return [];
+
+  return busStopDirectory.filter(stop =>
+    stop.code.toLowerCase().includes(q) ||
+    stop.name.toLowerCase().includes(q) ||
+    stop.road.toLowerCase().includes(q)
+  ).slice(0, limit);
+}
+
+function distanceKm(lat1, lng1, lat2, lng2) {
+  const toRad = value => value * Math.PI / 180;
+  const earthRadiusKm = 6371;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+    Math.sin(dLng / 2) * Math.sin(dLng / 2);
+
+  return 2 * earthRadiusKm * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 async function fetchLiveWeather(lat = null, lng = null, stopCode = null, selectedArea = null) {
   const condText = document.getElementById("weather-condition-text");
   const areaText = document.getElementById("weather-area-text");
@@ -84,7 +151,7 @@ async function fetchLiveWeather(lat = null, lng = null, stopCode = null, selecte
     if (condText) condText.textContent = `${data.area} - ${data.forecast}`;
     if (areaText) {
       if (lat !== null && lng !== null && stopCode) {
-        areaText.textContent = `Nearest weather area to the approaching bus at stop ${stopCode}`;
+        areaText.textContent = `Nearest weather area to bus stop ${stopCode}`;
       } else {
         areaText.textContent = "";
       }
@@ -134,6 +201,8 @@ function setupLiveBusPanel() {
 
   if (!input || !btn || !list) return;
 
+  loadBusStopDirectory();
+
   function hideDropdown() {
     if (dropdown) dropdown.style.display = "none";
   }
@@ -181,13 +250,12 @@ function setupLiveBusPanel() {
       return;
     }
 
-    const matches = busStops.filter(s => 
-      s.code.toLowerCase().includes(query) ||
-      s.name.toLowerCase().includes(query) ||
-      s.road.toLowerCase().includes(query)
-    ).slice(0, 10);
-
-    showDropdown(matches);
+    showDropdown(findBusStops(query));
+    loadBusStopDirectory().then(() => {
+      if (input.value.trim().toLowerCase() === query) {
+        showDropdown(findBusStops(query));
+      }
+    });
   });
 
   document.addEventListener("click", (e) => {
@@ -202,15 +270,15 @@ function setupLiveBusPanel() {
     let stopCode = rawInput;
     let matchedStop = null;
 
+    list.innerHTML = `<li class="hotspot-item"><span class="hotspot-item-title">Fetching live telemetry for stop ${rawInput}...</span></li>`;
+    announceToScreenReader(`Loading bus stop ${rawInput}`);
+    await loadBusStopDirectory();
+
     if (/^\d{5}$/.test(rawInput)) {
-      matchedStop = busStops.find(s => s.code === rawInput);
+      matchedStop = findBusStopByCode(rawInput);
     } else {
       const query = rawInput.toLowerCase();
-      matchedStop = busStops.find(s => 
-        s.code.toLowerCase() === query ||
-        s.name.toLowerCase().includes(query) ||
-        s.road.toLowerCase().includes(query)
-      );
+      matchedStop = findBusStops(query, 1)[0] || null;
       if (matchedStop) {
         stopCode = matchedStop.code;
         input.value = matchedStop.code;
@@ -224,8 +292,7 @@ function setupLiveBusPanel() {
     list.innerHTML = `<li class="hotspot-item"><span class="hotspot-item-title">Fetching live telemetry for stop ${stopCode}...</span></li>`;
     announceToScreenReader(`Loading bus stop ${stopCode}`);
 
-    // Update weather immediately based on bus stop coordinates or fallback to City
-    if (matchedStop && typeof matchedStop.lat === "number" && typeof matchedStop.lng === "number") {
+    if (hasCoordinates(matchedStop)) {
       fetchLiveWeather(matchedStop.lat, matchedStop.lng, stopCode);
     } else {
       fetchLiveWeather(null, null, null, "City");
@@ -248,11 +315,6 @@ function setupLiveBusPanel() {
 
       if (footer) {
         footer.textContent = `Source: ${data.source} • Fetched at ${new Date(data.fetchedAt).toLocaleTimeString()}`;
-      }
-
-      // If matchedStop didn't have coordinates, fallback to data.coordinates if available
-      if ((!matchedStop || typeof matchedStop.lat !== "number") && data.coordinates) {
-        fetchLiveWeather(data.coordinates.lat, data.coordinates.lng, stopCode);
       }
 
       list.innerHTML = "";
@@ -317,16 +379,17 @@ function setupLiveBusPanel() {
       showToast("Location", "Requesting your GPS location...", "info");
 
       navigator.geolocation.getCurrentPosition(
-        (position) => {
+        async (position) => {
           const userLat = position.coords.latitude;
           const userLng = position.coords.longitude;
+          const stops = await loadBusStopDirectory();
 
           let nearestStop = null;
           let minDistance = Infinity;
 
-          busStops.forEach(stop => {
-            if (typeof stop.lat === "number" && typeof stop.lng === "number") {
-              const dist = Math.hypot(stop.lat - userLat, stop.lng - userLng);
+          stops.forEach(stop => {
+            if (hasCoordinates(stop)) {
+              const dist = distanceKm(userLat, userLng, stop.lat, stop.lng);
               if (dist < minDistance) {
                 minDistance = dist;
                 nearestStop = stop;
@@ -344,7 +407,7 @@ function setupLiveBusPanel() {
         },
         (error) => {
           console.error("Geolocation error:", error);
-          showToast("Location Error", "Unable to retrieve your location. Please check permissions.", "error");
+          showToast("Location Error", "Location permission blocked. You can still enter any 5-digit bus stop code manually.", "error");
         },
         { timeout: 10000, maximumAge: 60000 }
       );

@@ -9,6 +9,7 @@ import { createServer as createViteServer } from "vite";
 import weatherHandler from "./api/weather.js";
 import busHandler from "./api/bus.js";
 import trainHandler from "./api/train.js";
+import busStopsHandler from "./api/bus-stops.js";
 
 dotenv.config();
 
@@ -42,6 +43,15 @@ async function startServer() {
       await busHandler(req, res);
     } catch (error) {
       console.error("Server Bus API error:", error);
+      res.status(500).json({ success: false, error: "Internal Server Error" });
+    }
+  });
+
+  app.get("/api/bus-stops", async (req, res) => {
+    try {
+      await busStopsHandler(req, res);
+    } catch (error) {
+      console.error("Server Bus Stops API error:", error);
       res.status(500).json({ success: false, error: "Internal Server Error" });
     }
   });
