@@ -117,7 +117,11 @@
       <div class="card-body">
         <div id="weather-content-box">
           <p class="font-headline-md" id="weather-condition-text">Loading weather nowcast...</p>
-          <p class="font-body-md" id="weather-area-text" style="color: var(--color-on-surface-variant); margin-top: 4px;"></p>
+          <div id="weather-area-container" style="margin-top: 8px;">
+            <p class="font-body-md" id="weather-area-text" style="color: var(--color-on-surface-variant);"></p>
+            <select id="weather-area-select" class="form-control" style="margin-top: 8px; display: none;">
+            </select>
+          </div>
         </div>
         <div id="weather-meta-footer" class="truth-notice-box" style="margin-top: 16px;">
           Source: NEA via data.gov.sg

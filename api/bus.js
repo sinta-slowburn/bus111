@@ -70,9 +70,34 @@ export default async function handler(req, res) {
         return "No crowd data for this bus.";
       })();
 
+      // Coordinate extraction and validation logic
+      const parseCoordinates = (busObj) => {
+        if (!busObj) return null;
+        const monitored = Number(busObj.Monitored ?? busObj.monitored ?? 0);
+        if (monitored !== 1) return null;
+
+        const latVal = Number(busObj.Latitude ?? busObj.latitude);
+        const lngVal = Number(busObj.Longitude ?? busObj.longitude);
+
+        if (
+          !isNaN(latVal) &&
+          !isNaN(lngVal) &&
+          latVal >= 1.1 &&
+          latVal <= 1.5 &&
+          lngVal >= 103.6 &&
+          lngVal <= 104.1
+        ) {
+          return { lat: latVal, lng: lngVal };
+        }
+        return null;
+      };
+
+      const coordinates = parseCoordinates(nextBusObj) || parseCoordinates(nextBus2Obj) || parseCoordinates(nextBus3Obj) || null;
+
       return {
         serviceNo: svc.ServiceNo || svc.serviceNo || "Unknown",
         operator: svc.Operator || svc.operator || "Unknown",
+        coordinates,
         nextBus: {
           minutes: parseMinutes(nextBusObj.EstimatedArrival || nextBusObj.estimatedArrival),
           load: mapLoad(loadCode),

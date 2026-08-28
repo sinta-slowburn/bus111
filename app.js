@@ -55,23 +55,64 @@ function showToast(title, message, type = "info") {
   }, 4000);
 }
 
-async function fetchLiveWeather() {
+async function fetchLiveWeather(lat = null, lng = null) {
   const condText = document.getElementById("weather-condition-text");
   const areaText = document.getElementById("weather-area-text");
+  const areaSelect = document.getElementById("weather-area-select");
   const footer = document.getElementById("weather-meta-footer");
 
   if (condText) condText.textContent = "Loading weather nowcast...";
 
   try {
-    const res = await fetch("/api/weather");
+    let url = "/api/weather";
+    if (lat !== null && lng !== null) {
+      url += `?lat=${lat}&lng=${lng}`;
+    }
+
+    const res = await fetch(url);
     const data = await res.json();
 
     if (!res.ok || !data.success) {
       throw new Error(data.error || "Failed to fetch weather");
     }
 
-    if (condText) condText.textContent = `Forecast: ${data.forecast}`;
-    if (areaText) areaText.textContent = `Region / Area: ${data.area}`;
+    if (condText) condText.textContent = `${data.area} - ${data.forecast}`;
+    if (areaText) {
+      if (lat !== null && lng !== null) {
+        areaText.textContent = "nearest weather area to the approaching bus";
+      } else {
+        areaText.textContent = `Region / Area: ${data.area}`;
+      }
+    }
+
+    if (areaSelect) {
+      if (lat !== null && lng !== null) {
+        areaSelect.style.display = "none";
+      } else if (data.areas && Array.isArray(data.areas)) {
+        areaSelect.style.display = "block";
+        areaSelect.innerHTML = `<option value="">Select weather area...</option>`;
+        data.areas.forEach(a => {
+          const opt = document.createElement("option");
+          opt.value = a;
+          opt.textContent = a;
+          if (a === data.area) opt.selected = true;
+          areaSelect.appendChild(opt);
+        });
+
+        if (!areaSelect.dataset.listenerAttached) {
+          areaSelect.addEventListener("change", async () => {
+            const selectedArea = areaSelect.value;
+            if (!selectedArea) return;
+            // Fetch by area or re-fetch default
+            await fetchLiveWeather();
+          });
+          areaSelect.dataset.listenerAttached = "true";
+        }
+      } else {
+        areaSelect.style.display = "none";
+      }
+    }
+
     if (footer) footer.textContent = `Source: ${data.source} • Fetched at ${new Date(data.fetchedAt).toLocaleTimeString()}`;
   } catch (err) {
     console.error("Live weather error:", err);
@@ -116,6 +157,19 @@ function setupLiveBusPanel() {
 
       if (footer) {
         footer.textContent = `Source: ${data.source} • Fetched at ${new Date(data.fetchedAt).toLocaleTimeString()}`;
+      }
+
+      // Check for first valid coordinates across services
+      let foundCoords = null;
+      for (const svc of data.services) {
+        if (svc.coordinates && typeof svc.coordinates.lat === "number" && typeof svc.coordinates.lng === "number") {
+          foundCoords = svc.coordinates;
+          break;
+        }
+      }
+
+      if (foundCoords) {
+        fetchLiveWeather(foundCoords.lat, foundCoords.lng);
       }
 
       list.innerHTML = "";

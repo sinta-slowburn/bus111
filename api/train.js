@@ -26,21 +26,12 @@ export default async function handler(req, res) {
   }
 
   try {
-    let response = await fetch(`https://datamall2.mytransport.sg/ltaodataservice/PCDRealTime?TrainLine=${line}`, {
+    const response = await fetch(`https://datamall2.mytransport.sg/ltaodataservice/PCDRealTime?TrainLine=${line}`, {
       headers: {
         "AccountKey": accountKey,
         "accept": "application/json",
       },
     });
-
-    if (response.status === 404) {
-      response = await fetch(`https://datamall2.mytransport.sg/ltaodataservice/v3/PCDRealTime?TrainLine=${line}`, {
-        headers: {
-          "AccountKey": accountKey,
-          "accept": "application/json",
-        },
-      });
-    }
 
     if (!response.ok) {
       throw new Error(`LTA DataMall HTTP ${response.status}`);
@@ -55,10 +46,11 @@ export default async function handler(req, res) {
     const stations = (Array.isArray(stationsRaw) ? stationsRaw : []).map(st => {
       const mapCrowd = (level) => {
         if (!level) return "Unknown";
-        const code = String(level).toLowerCase();
-        if (code === "l") return "Low";
-        if (code === "m") return "Moderate";
-        if (code === "h") return "High";
+        const code = String(level).trim();
+        if (code === "l" || code === "L") return "Low";
+        if (code === "m" || code === "M") return "Moderate";
+        if (code === "h" || code === "H") return "High";
+        if (code === "NA" || code === "na") return "No data";
         return "Unknown";
       };
 
