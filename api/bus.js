@@ -29,7 +29,6 @@ export default async function handler(req, res) {
       headers: {
         "AccountKey": accountKey,
         "accept": "application/json",
-        "User-Agent": "CROWDCON-App",
       },
     });
 
@@ -91,6 +90,6 @@ export default async function handler(req, res) {
     });
   } catch (error) {
     console.error("api/bus error:", error.message);
-    return res.status(500).json({ success: false, error: "Data unavailable: Failed to fetch LTA bus telemetry" });
+    return res.status(500).json({ success: false, error: "Data unavailable", detail: error.message });
   }
 }
