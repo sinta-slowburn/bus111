@@ -1601,3 +1601,63 @@ body {
   border-bottom: none;
 }
 
+/* --- Desktop Layout & Responsive Grid Enhancements --- */
+@media (min-width: 768px) {
+  header[role="banner"],
+  #main-content,
+  .app-footer {
+    max-width: 1200px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  #main-content {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: var(--space-5) !important;
+  }
+
+  /* Disqus panel spans full width */
+  #main-content > article.brutalist-card:last-child {
+    grid-column: 1 / -1 !important;
+  }
+
+  /* Equal height panels in a row */
+  .brutalist-card {
+    height: 100%;
+  }
+
+  .brutalist-card .card-body {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+
+  /* Scrollable result lists for bus and train */
+  #bus-results-wrapper,
+  #train-results-wrapper {
+    max-height: 380px;
+    overflow-y: auto;
+  }
+
+  /* Cap body copy and source/timestamp lines at ~65ch */
+  .card-body p,
+  .truth-notice-box,
+  .font-body-md,
+  .font-body-lg {
+    max-width: 65ch;
+  }
+}
+
+@media (min-width: 1100px) {
+  #main-content {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+
+  /* Disqus panel still spans all 3 columns */
+  #main-content > article.brutalist-card:last-child {
+    grid-column: 1 / -1 !important;
+  }
+}
+
+
