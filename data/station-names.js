@@ -104,6 +104,7 @@ export const stationNames = {
   "CC15": "Bishan",
   "CC16": "Marymount",
   "CC17": "Caldecott",
+  "CC18": "Bukit Brown",
   "CC19": "Botanic Gardens",
   "CC20": "Farrer Road",
   "CC21": "Holland Village",
@@ -115,6 +116,11 @@ export const stationNames = {
   "CC27": "Labrador Park",
   "CC28": "Telok Blangah",
   "CC29": "HarbourFront",
+  "CC30": "Keppel",
+  "CC31": "Cantonment",
+  "CC32": "Prince Edward Road",
+  "CC33": "Marina Bay",
+  "CC34": "Bayfront",
 
   // Circle Line Extension (CEL)
   "CE1": "Bayfront",
@@ -156,6 +162,8 @@ export const stationNames = {
   "DT33": "Tampines East",
   "DT34": "Upper Changi",
   "DT35": "Expo",
+  "DT36": "Xilin",
+  "DT37": "Sungei Bedok",
 
   // Thomson-East Coast Line (TEL)
   "TE1": "Woodlands North",
@@ -178,8 +186,9 @@ export const stationNames = {
   "TE18": "Maxwell",
   "TE19": "Shenton Way",
   "TE20": "Marina Bay",
-  "TE21": "Gardens by the Bay",
-  "TE22": "Marina South",
+  "TE21": "Marina South",
+  "TE22": "Gardens by the Bay",
+  "TE22A": "Founders' Memorial",
   "TE23": "Tanjong Rhu",
   "TE24": "Katong Park",
   "TE25": "Tanjong Katong",
@@ -187,6 +196,8 @@ export const stationNames = {
   "TE27": "Marine Terrace",
   "TE28": "Siglap",
   "TE29": "Bayshore",
+  "TE30": "Bedok South",
+  "TE31": "Sungei Bedok",
 
   // Bukit Panjang LRT (BPL)
   "BP1": "Choa Chu Kang",
