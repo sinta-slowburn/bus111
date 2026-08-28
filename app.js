@@ -110,6 +110,13 @@ async function fetchLiveWeather(lat = null, lng = null, stopCode = null) {
           areaSelect.dataset.listenerAttached = "true";
         }
       }
+      let optionExists = Array.from(areaSelect.options).some(opt => opt.value === data.area);
+      if (!optionExists && data.area) {
+        const opt = document.createElement("option");
+        opt.value = data.area;
+        opt.textContent = data.area;
+        areaSelect.appendChild(opt);
+      }
       areaSelect.value = data.area;
     }
 
