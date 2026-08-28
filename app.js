@@ -3,6 +3,8 @@
  * Description: Client-side logic for CROWDCON shippable demo.
  */
 
+import { stationNames } from "./data/station-names.js";
+
 const SINGAPORE_LOCATIONS = [
   { id: "orchard", name: "Orchard Road Corridor", stationCode: "NS22 / TE14", type: "Shopping Corridor", lat: 1.3048, lng: 103.8318 },
   { id: "dhoby-ghaut", name: "Dhoby Ghaut Interchange", stationCode: "NS24 / NE6 / CC1", type: "Mega Interchange", lat: 1.2989, lng: 103.8456 },
@@ -272,11 +274,13 @@ function setupLiveTrainPanel() {
         if (st.crowdLevel === "Moderate") crowdIcon = "sentiment_neutral";
         if (st.crowdLevel === "High") crowdIcon = "warning";
 
+        const resolvedName = stationNames[st.stationID];
+        const stationDisplay = resolvedName ? `${resolvedName} (${st.stationID})` : st.stationID;
+
         li.innerHTML = `
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <div>
-              <span style="font-weight:900; font-size:1.125rem; margin-right:8px;">${st.stationID}</span>
-              <span style="font-weight:700;">${st.stationName}</span>
+              <span style="font-weight:700; font-size:1.125rem;">${stationDisplay}</span>
             </div>
             <div style="display:flex; align-items:center; gap:6px; font-weight:700;">
               <span class="material-symbols-outlined" aria-hidden="true">${crowdIcon}</span>
