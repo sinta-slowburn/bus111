@@ -114,9 +114,18 @@ export default async function handler(req, res) {
       };
     });
 
+    let topLevelCoordinates = null;
+    for (const svc of services) {
+      if (svc.coordinates && typeof svc.coordinates.lat === "number" && typeof svc.coordinates.lng === "number") {
+        topLevelCoordinates = svc.coordinates;
+        break;
+      }
+    }
+
     return res.status(200).json({
       success: true,
       busStop: data.BusStopCode || data.busStopCode || stop,
+      coordinates: topLevelCoordinates,
       services,
       source: "LTA DataMall",
       fetchedAt: new Date().toISOString(),

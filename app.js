@@ -16,7 +16,8 @@ const SINGAPORE_LOCATIONS = [
 document.addEventListener("DOMContentLoaded", () => {
   setupLiveBusPanel();
   setupLiveTrainPanel();
-  fetchLiveWeather();
+  const condText = document.getElementById("weather-condition-text");
+  if (condText) condText.textContent = "Enter a bus stop to see the local forecast.";
   announceToScreenReader("");
 });
 
@@ -57,23 +58,15 @@ function showToast(title, message, type = "info") {
   }, 4000);
 }
 
-async function fetchLiveWeather(lat = null, lng = null, stopCode = null) {
+async function fetchLiveWeather(lat, lng, stopCode) {
   const condText = document.getElementById("weather-condition-text");
   const areaText = document.getElementById("weather-area-text");
-  const areaSelect = document.getElementById("weather-area-select");
   const footer = document.getElementById("weather-meta-footer");
 
-  if (!lat && !lng && condText) {
-    condText.textContent = "Loading weather nowcast...";
-  }
+  if (!lat || !lng) return;
 
   try {
-    let url = "/api/weather";
-    if (lat !== null && lng !== null) {
-      url += `?lat=${lat}&lng=${lng}`;
-    }
-
-    const res = await fetch(url);
+    const res = await fetch(`/api/weather?lat=${lat}&lng=${lng}`);
     const data = await res.json();
 
     if (!res.ok || !data.success) {
@@ -82,58 +75,16 @@ async function fetchLiveWeather(lat = null, lng = null, stopCode = null) {
 
     if (condText) condText.textContent = `${data.area} - ${data.forecast}`;
     if (areaText) {
-      if (lat !== null && lng !== null && stopCode) {
-        areaText.textContent = `Nearest weather area to the approaching bus at stop ${stopCode}`;
-      } else {
-        areaText.textContent = `Region / Area: ${data.area}`;
-      }
-    }
-
-    if (areaSelect) {
-      if (data.areas && Array.isArray(data.areas)) {
-        areaSelect.style.display = "block";
-        areaSelect.innerHTML = `<option value="">Select weather area...</option>`;
-        data.areas.forEach(a => {
-          const opt = document.createElement("option");
-          opt.value = a;
-          opt.textContent = a;
-          if (a === data.area) opt.selected = true;
-          areaSelect.appendChild(opt);
-        });
-
-        if (!areaSelect.dataset.listenerAttached) {
-          areaSelect.addEventListener("change", async () => {
-            const selectedArea = areaSelect.value;
-            if (!selectedArea) return;
-            await fetchLiveWeather();
-          });
-          areaSelect.dataset.listenerAttached = "true";
-        }
-      }
-      let optionExists = Array.from(areaSelect.options).some(opt => opt.value === data.area);
-      if (!optionExists && data.area) {
-        const opt = document.createElement("option");
-        opt.value = data.area;
-        opt.textContent = data.area;
-        areaSelect.appendChild(opt);
-      }
-      areaSelect.value = data.area;
+      areaText.textContent = `Nearest weather area to the approaching bus at stop ${stopCode}`;
     }
 
     if (footer) {
       footer.textContent = `Source: ${data.source} • Fetched at ${new Date(data.fetchedAt).toLocaleTimeString()}`;
     }
 
-    if (lat !== null && lng !== null && stopCode) {
-      announceToScreenReader(`Weather updated to ${data.area}`);
-    }
+    announceToScreenReader(`Weather updated to ${data.area}`);
   } catch (err) {
     console.error("Live weather error:", err);
-    if (!lat && !lng) {
-      if (condText) condText.textContent = "Data unavailable: Failed to fetch live weather";
-      if (areaText) areaText.textContent = "Please check network connection.";
-      showToast("Weather Error", "Data unavailable: Failed to fetch live weather", "error");
-    }
   }
 }
 
@@ -175,17 +126,8 @@ function setupLiveBusPanel() {
         footer.textContent = `Source: ${data.source} • Fetched at ${new Date(data.fetchedAt).toLocaleTimeString()}`;
       }
 
-      // Check for first valid coordinates across services
-      let foundCoords = null;
-      for (const svc of data.services) {
-        if (svc.coordinates && typeof svc.coordinates.lat === "number" && typeof svc.coordinates.lng === "number") {
-          foundCoords = svc.coordinates;
-          break;
-        }
-      }
-
-      if (foundCoords) {
-        fetchLiveWeather(foundCoords.lat, foundCoords.lng, stopCode);
+      if (data.coordinates) {
+        fetchLiveWeather(data.coordinates.lat, data.coordinates.lng, stopCode);
       }
 
       list.innerHTML = "";
