@@ -14,7 +14,6 @@ export default async function handler(req, res) {
 
   const urlObj = new URL(req.url, `http://${req.headers.host || "localhost"}`);
   const line = (urlObj.searchParams.get("line") || "").trim().toUpperCase();
-  const debug = urlObj.searchParams.get("debug") === "1";
 
   const allowedLines = ["CCL", "CEL", "CGL", "DTL", "EWL", "NEL", "NSL", "BPL", "SLRT", "PLRT", "TEL"];
   if (!allowedLines.includes(line)) {
@@ -40,10 +39,6 @@ export default async function handler(req, res) {
 
     const data = await response.json();
     console.error("LTA PCDRealTime raw response keys:", Object.keys(data || {}));
-
-    if (debug) {
-      return res.status(200).json(data);
-    }
 
     const stationsRaw = Array.isArray(data.value) ? data.value : [];
 
@@ -76,6 +71,6 @@ export default async function handler(req, res) {
     });
   } catch (error) {
     console.error("api/train error:", error.message);
-    return res.status(500).json({ success: false, error: "Data unavailable", detail: error.message });
+    return res.status(500).json({ success: false, error: "Data unavailable" });
   }
 }

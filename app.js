@@ -17,7 +17,7 @@ document.addEventListener("DOMContentLoaded", () => {
   setupLiveBusPanel();
   setupLiveTrainPanel();
   fetchLiveWeather();
-  announceToScreenReader("CROWDCON loaded. Ready for bus stop code, train line, and weather queries.");
+  announceToScreenReader("");
 });
 
 function announceToScreenReader(message) {

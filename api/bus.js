@@ -123,6 +123,6 @@ export default async function handler(req, res) {
     });
   } catch (error) {
     console.error("api/bus error:", error.message);
-    return res.status(500).json({ success: false, error: "Data unavailable", detail: error.message });
+    return res.status(500).json({ success: false, error: "Data unavailable" });
   }
 }
