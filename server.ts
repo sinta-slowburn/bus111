@@ -6,7 +6,8 @@ import express from "express";
 import path from "path";
 import dotenv from "dotenv";
 import { createServer as createViteServer } from "vite";
-import insightHandler from "./api/insight.js";
+import weatherHandler from "./api/weather.js";
+import busHandler from "./api/bus.js";
 
 dotenv.config();
 
@@ -21,18 +22,26 @@ async function startServer() {
   app.get("/api/health", (req, res) => {
     res.json({
       status: "ok",
-      service: "CROWDCON Singapore Day-Trip & Crowd Intelligence",
+      service: "CROWDCON Singapore Crowd Intelligence",
       timestamp: new Date().toISOString(),
     });
   });
 
-  // Vercel serverless function proxy route
-  app.post("/api/insight", async (req, res) => {
+  app.get("/api/weather", async (req, res) => {
     try {
-      await insightHandler(req, res);
+      await weatherHandler(req, res);
     } catch (error) {
-      console.error("Server API error:", error);
-      res.status(500).json({ error: "Internal Server Error" });
+      console.error("Server Weather API error:", error);
+      res.status(500).json({ success: false, error: "Internal Server Error" });
+    }
+  });
+
+  app.get("/api/bus", async (req, res) => {
+    try {
+      await busHandler(req, res);
+    } catch (error) {
+      console.error("Server Bus API error:", error);
+      res.status(500).json({ success: false, error: "Internal Server Error" });
     }
   });
 
