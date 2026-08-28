@@ -64,6 +64,50 @@
       </div>
     </article>
 
+    <!-- Panel: Live Train Crowding -->
+    <article class="brutalist-card">
+      <div class="card-header" style="background: var(--color-tertiary-container); color: var(--color-on-primary);">
+        <h2 class="font-headline-lg">Live Train Line Crowding</h2>
+        <span class="status-pill live-badge">LTA DataMall</span>
+      </div>
+      <div class="card-body">
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label for="train-line-select" class="form-label">Select Train Line</label>
+          <div style="display: flex; gap: 12px; margin-top: 8px;">
+            <select id="train-line-select" class="form-control" style="flex:1;">
+              <option value="NSL">North-South Line (NSL)</option>
+              <option value="EWL">East-West Line (EWL)</option>
+              <option value="NEL">North-East Line (NEL)</option>
+              <option value="CCL">Circle Line (CCL)</option>
+              <option value="CEL">Circle Line Extension (CEL)</option>
+              <option value="CGL">Changi Airport Branch (CGL)</option>
+              <option value="DTL">Downtown Line (DTL)</option>
+              <option value="TEL">Thomson-East Coast Line (TEL)</option>
+              <option value="BPL">Bukit Panjang LRT (BPL)</option>
+              <option value="SLRT">Sengkang LRT (SLRT)</option>
+              <option value="PLRT">Punggol LRT (PLRT)</option>
+            </select>
+            <button type="button" id="btn-fetch-train" class="btn-broadcast">CHECK</button>
+          </div>
+        </div>
+
+        <div id="train-results-wrapper">
+          <ul id="train-results-list" aria-live="polite" class="hotspot-list" style="list-style: none; padding: 0; margin: 0;">
+            <li class="hotspot-item">
+              <div>
+                <span class="hotspot-item-title">Select a train line</span>
+                <span class="hotspot-item-type">View real-time station crowd levels across the network.</span>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <div id="train-meta-footer" class="truth-notice-box" style="margin-top: 16px;">
+          Source: LTA DataMall
+        </div>
+      </div>
+    </article>
+
     <!-- Panel 2: Live Weather -->
     <article class="brutalist-card">
       <div class="card-header bg-secondary">

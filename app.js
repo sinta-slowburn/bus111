@@ -13,8 +13,9 @@ const SINGAPORE_LOCATIONS = [
 
 document.addEventListener("DOMContentLoaded", () => {
   setupLiveBusPanel();
+  setupLiveTrainPanel();
   fetchLiveWeather();
-  announceToScreenReader("CROWDCON loaded. Ready for bus stop code and weather queries.");
+  announceToScreenReader("CROWDCON loaded. Ready for bus stop code, train line, and weather queries.");
 });
 
 function announceToScreenReader(message) {
@@ -167,4 +168,80 @@ function setupLiveBusPanel() {
       handleFetch();
     }
   });
+}
+
+function setupLiveTrainPanel() {
+  const select = document.getElementById("train-line-select");
+  const btn = document.getElementById("btn-fetch-train");
+  const list = document.getElementById("train-results-list");
+  const footer = document.getElementById("train-meta-footer");
+
+  if (!select || !btn || !list) return;
+
+  async function handleFetch() {
+    const line = select.value;
+    if (!line) {
+      list.innerHTML = `<li class="hotspot-item" style="color:var(--color-error); font-weight:700;">Data unavailable: Please select a train line.</li>`;
+      announceToScreenReader("Please select a train line.");
+      return;
+    }
+
+    list.innerHTML = `<li class="hotspot-item"><span class="hotspot-item-title">Fetching live crowd levels for line ${line}...</span></li>`;
+    announceToScreenReader(`Fetching live train crowd levels for line ${line}`);
+
+    try {
+      const res = await fetch(`/api/train?line=${line}`);
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Data unavailable");
+      }
+
+      if (!data.stations || data.stations.length === 0) {
+        list.innerHTML = `<li class="hotspot-item"><span class="hotspot-item-title">No station crowd data found for line ${line}.</span></li>`;
+        if (footer) footer.textContent = "Source: LTA DataMall • No stations found";
+        return;
+      }
+
+      if (footer) {
+        footer.textContent = `Source: ${data.source} • Fetched at ${new Date(data.fetchedAt).toLocaleTimeString()}`;
+      }
+
+      list.innerHTML = "";
+      data.stations.forEach(st => {
+        const li = document.createElement("li");
+        li.className = "hotspot-item";
+        li.style.display = "block";
+
+        let crowdIcon = "info";
+        if (st.crowdLevel === "Low") crowdIcon = "sentiment_satisfied";
+        if (st.crowdLevel === "Moderate") crowdIcon = "sentiment_neutral";
+        if (st.crowdLevel === "High") crowdIcon = "warning";
+
+        li.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <span style="font-weight:900; font-size:1.125rem; margin-right:8px;">${st.stationID}</span>
+              <span style="font-weight:700;">${st.stationName}</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:6px; font-weight:700;">
+              <span class="material-symbols-outlined" aria-hidden="true">${crowdIcon}</span>
+              <span>Crowd: ${st.crowdLevel}</span>
+            </div>
+          </div>
+        `;
+        list.appendChild(li);
+      });
+
+      announceToScreenReader(`Loaded live train crowd levels for line ${line}`);
+    } catch (err) {
+      console.error("Live train fetch error:", err);
+      list.innerHTML = `<li class="hotspot-item" style="color:var(--color-error); font-weight:700;">Data unavailable: ${err.message || "Failed to fetch train crowd telemetry."}</li>`;
+      announceToScreenReader("Data unavailable: Error fetching live train crowd levels.");
+      showToast("Train Error", err.message || "Data unavailable", "error");
+    }
+  }
+
+  btn.addEventListener("click", handleFetch);
+  select.addEventListener("change", handleFetch);
 }
