@@ -194,7 +194,6 @@ function setupLiveBusPanel() {
           </div>
           <div style="background:var(--color-surface-container); padding:8px 12px; font-size:0.875rem; font-weight:700;">
             Should You Go? ${svc.nextBus.advice}
-            <div style="font-size:0.7rem; color:var(--color-on-surface-variant); font-weight:400; margin-top:2px;">Rule based, not AI generated.</div>
           </div>
         `;
         list.appendChild(li);
