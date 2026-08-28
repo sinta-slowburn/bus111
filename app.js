@@ -57,13 +57,15 @@ function showToast(title, message, type = "info") {
   }, 4000);
 }
 
-async function fetchLiveWeather(lat = null, lng = null) {
+async function fetchLiveWeather(lat = null, lng = null, stopCode = null) {
   const condText = document.getElementById("weather-condition-text");
   const areaText = document.getElementById("weather-area-text");
   const areaSelect = document.getElementById("weather-area-select");
   const footer = document.getElementById("weather-meta-footer");
 
-  if (condText) condText.textContent = "Loading weather nowcast...";
+  if (!lat && !lng && condText) {
+    condText.textContent = "Loading weather nowcast...";
+  }
 
   try {
     let url = "/api/weather";
@@ -80,17 +82,15 @@ async function fetchLiveWeather(lat = null, lng = null) {
 
     if (condText) condText.textContent = `${data.area} - ${data.forecast}`;
     if (areaText) {
-      if (lat !== null && lng !== null) {
-        areaText.textContent = "nearest weather area to the approaching bus";
+      if (lat !== null && lng !== null && stopCode) {
+        areaText.textContent = `Nearest weather area to the approaching bus at stop ${stopCode}`;
       } else {
         areaText.textContent = `Region / Area: ${data.area}`;
       }
     }
 
     if (areaSelect) {
-      if (lat !== null && lng !== null) {
-        areaSelect.style.display = "none";
-      } else if (data.areas && Array.isArray(data.areas)) {
+      if (data.areas && Array.isArray(data.areas)) {
         areaSelect.style.display = "block";
         areaSelect.innerHTML = `<option value="">Select weather area...</option>`;
         data.areas.forEach(a => {
@@ -105,22 +105,28 @@ async function fetchLiveWeather(lat = null, lng = null) {
           areaSelect.addEventListener("change", async () => {
             const selectedArea = areaSelect.value;
             if (!selectedArea) return;
-            // Fetch by area or re-fetch default
             await fetchLiveWeather();
           });
           areaSelect.dataset.listenerAttached = "true";
         }
-      } else {
-        areaSelect.style.display = "none";
       }
+      areaSelect.value = data.area;
     }
 
-    if (footer) footer.textContent = `Source: ${data.source} • Fetched at ${new Date(data.fetchedAt).toLocaleTimeString()}`;
+    if (footer) {
+      footer.textContent = `Source: ${data.source} • Fetched at ${new Date(data.fetchedAt).toLocaleTimeString()}`;
+    }
+
+    if (lat !== null && lng !== null && stopCode) {
+      announceToScreenReader(`Weather updated to ${data.area}`);
+    }
   } catch (err) {
     console.error("Live weather error:", err);
-    if (condText) condText.textContent = "Data unavailable: Failed to fetch live weather";
-    if (areaText) areaText.textContent = "Please check network connection.";
-    showToast("Weather Error", "Data unavailable: Failed to fetch live weather", "error");
+    if (!lat && !lng) {
+      if (condText) condText.textContent = "Data unavailable: Failed to fetch live weather";
+      if (areaText) areaText.textContent = "Please check network connection.";
+      showToast("Weather Error", "Data unavailable: Failed to fetch live weather", "error");
+    }
   }
 }
 
@@ -136,12 +142,12 @@ function setupLiveBusPanel() {
     const stopCode = input.value.trim();
     if (!/^\d{5}$/.test(stopCode)) {
       list.innerHTML = `<li class="hotspot-item" style="color:var(--color-error); font-weight:700;">Data unavailable: Please enter a valid 5-digit bus stop code (e.g. 03218).</li>`;
-      announceToScreenReader("Invalid bus stop code. Must be 5 digits.");
+      announceToScreenReader("Invalid bus stop code, must be 5 digits");
       return;
     }
 
     list.innerHTML = `<li class="hotspot-item"><span class="hotspot-item-title">Fetching live telemetry for stop ${stopCode}...</span></li>`;
-    announceToScreenReader(`Fetching live bus arrivals for stop ${stopCode}`);
+    announceToScreenReader(`Loading bus stop ${stopCode}`);
 
     try {
       const res = await fetch(`/api/bus?stop=${stopCode}`);
@@ -154,6 +160,7 @@ function setupLiveBusPanel() {
       if (!data.services || data.services.length === 0) {
         list.innerHTML = `<li class="hotspot-item"><span class="hotspot-item-title">No active bus arrivals found for stop ${stopCode}.</span></li>`;
         if (footer) footer.textContent = "Source: LTA DataMall • No active services";
+        announceToScreenReader("0 services found");
         return;
       }
 
@@ -171,7 +178,7 @@ function setupLiveBusPanel() {
       }
 
       if (foundCoords) {
-        fetchLiveWeather(foundCoords.lat, foundCoords.lng);
+        fetchLiveWeather(foundCoords.lat, foundCoords.lng, stopCode);
       }
 
       list.innerHTML = "";
@@ -208,11 +215,11 @@ function setupLiveBusPanel() {
         list.appendChild(li);
       });
 
-      announceToScreenReader(`Loaded live bus arrivals for stop ${stopCode}`);
+      announceToScreenReader(`${data.services.length} services found`);
     } catch (err) {
       console.error("Live bus fetch error:", err);
       list.innerHTML = `<li class="hotspot-item" style="color:var(--color-error); font-weight:700;">Data unavailable: ${err.message || "Failed to fetch live bus telemetry."}</li>`;
-      announceToScreenReader("Data unavailable: Error fetching live bus arrivals.");
+      announceToScreenReader("Data unavailable");
       showToast("Bus Error", err.message || "Data unavailable", "error");
     }
   }
