@@ -4,6 +4,7 @@
  */
 
 import { stationNames } from "./data/station-names.js";
+import { busStops } from "./data/bus-stops.js";
 
 const SINGAPORE_LOCATIONS = [
   { id: "orchard", name: "Orchard Road Corridor", stationCode: "NS22 / TE14", type: "Shopping Corridor", lat: 1.3048, lng: 103.8318 },
@@ -129,13 +130,77 @@ function setupLiveBusPanel() {
   const btn = document.getElementById("btn-fetch-bus");
   const list = document.getElementById("bus-results-list");
   const footer = document.getElementById("bus-meta-footer");
+  const dropdown = document.getElementById("bus-autocomplete-dropdown");
 
   if (!input || !btn || !list) return;
 
+  function hideDropdown() {
+    if (dropdown) dropdown.style.display = "none";
+  }
+
+  function showDropdown(matches) {
+    if (!dropdown) return;
+    if (matches.length === 0) {
+      dropdown.style.display = "none";
+      return;
+    }
+
+    dropdown.innerHTML = "";
+    matches.forEach(m => {
+      const item = document.createElement("div");
+      item.className = "autocomplete-item";
+      item.style.cssText = "padding: 10px 14px; cursor: pointer; border-bottom: 1px solid var(--color-surface-container-highest); display: flex; justify-content: space-between; align-items: center; background: var(--color-surface-bright);";
+      item.innerHTML = `
+        <div>
+          <span style="font-weight: 700; color: var(--color-primary); margin-right: 8px;">${m.code}</span>
+          <span style="font-weight: 700;">${m.name}</span>
+          <div style="font-size: 0.75rem; color: var(--color-on-surface-variant);">${m.road}</div>
+        </div>
+      `;
+      item.addEventListener("mouseenter", () => {
+        item.style.background = "var(--color-surface-container)";
+      });
+      item.addEventListener("mouseleave", () => {
+        item.style.background = "var(--color-surface-bright)";
+      });
+      item.addEventListener("click", () => {
+        input.value = m.code;
+        hideDropdown();
+        handleFetch();
+      });
+      dropdown.appendChild(item);
+    });
+
+    dropdown.style.display = "block";
+  }
+
+  input.addEventListener("input", () => {
+    const query = input.value.trim().toLowerCase();
+    if (query.length < 1) {
+      hideDropdown();
+      return;
+    }
+
+    const matches = busStops.filter(s => 
+      s.code.toLowerCase().includes(query) ||
+      s.name.toLowerCase().includes(query) ||
+      s.road.toLowerCase().includes(query)
+    ).slice(0, 10);
+
+    showDropdown(matches);
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!input.contains(e.target) && dropdown && !dropdown.contains(e.target)) {
+      hideDropdown();
+    }
+  });
+
   async function handleFetch() {
+    hideDropdown();
     const stopCode = input.value.trim();
     if (!/^\d{5}$/.test(stopCode)) {
-      list.innerHTML = `<li class="hotspot-item" style="color:var(--color-error); font-weight:700;">Data unavailable: Please enter a valid 5-digit bus stop code (e.g. 03218).</li>`;
+      list.innerHTML = `<li class="hotspot-item" style="color:var(--color-error); font-weight:700;">Data unavailable: Please enter a valid 5-digit bus stop code or select a stop from suggestions (e.g. 03218).</li>`;
       announceToScreenReader("Invalid bus stop code, must be 5 digits");
       return;
     }

@@ -39,11 +39,12 @@
         <span class="status-pill live-badge">LTA DataMall</span>
       </div>
       <div class="card-body">
-        <div class="form-group" style="margin-bottom: 16px;">
-          <label for="bus-stop-input" class="form-label">5-Digit Bus Stop Code</label>
-          <div style="display: flex; gap: 12px; margin-top: 8px;">
-            <input type="text" id="bus-stop-input" class="form-control" placeholder="e.g. 03218" maxlength="5" autocomplete="off" />
+        <div class="form-group" style="margin-bottom: 16px; position: relative;">
+          <label for="bus-stop-input" class="form-label">Bus Stop (Code, Road Name, or Description)</label>
+          <div style="display: flex; gap: 12px; margin-top: 8px; position: relative;">
+            <input type="text" id="bus-stop-input" class="form-control" placeholder="e.g. 03218, Orchard Rd, Pinnacle" autocomplete="off" style="flex: 1;" />
             <button type="button" id="btn-fetch-bus" class="btn-broadcast">CHECK</button>
+            <div id="bus-autocomplete-dropdown" style="display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 90px; background: var(--color-surface-bright); border: var(--border-thick) solid var(--color-on-background); box-shadow: var(--shadow-md); z-index: 1000; max-height: 280px; overflow-y: auto;"></div>
           </div>
         </div>
 
