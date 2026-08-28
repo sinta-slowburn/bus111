@@ -129,6 +129,26 @@
       </div>
     </article>
 
+    <!-- Panel: Community Comments -->
+    <article class="brutalist-card">
+      <div class="card-header" style="background: var(--color-surface-container-high); color: var(--color-on-surface);">
+        <h2 class="font-headline-lg">Community Discussion</h2>
+        <span class="status-pill">Disqus</span>
+      </div>
+      <div class="card-body">
+        <div id="disqus_thread"></div>
+        <script>
+        (function() {
+        var d = document, s = d.createElement('script');
+        s.src = 'https://sinta888.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+        })();
+        </script>
+        <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+      </div>
+    </article>
+
   </main>
 
   <footer class="app-footer" role="contentinfo" style="margin-top: auto; padding: 24px; border-top: 4px solid var(--color-on-background); background: var(--color-surface-bright); text-align: center;">
