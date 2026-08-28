@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CROWDCON - Singapore Crowd Intelligence & Day-Trip Planner</title>
+  <meta name="description" content="Mobile-responsive Singapore day-trip planning and crowd risk platform with transit telemetry, localized weather nowcasting, and Gemini AI insights.">
+  
+  <!-- Google Fonts: Syne (Headlines) & Archivo Narrow (Body/Labels) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@400;500;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+  
+  <!-- Leaflet Map CSS for Singapore GIS layer -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  
+  <!-- Core Design System Stylesheet -->
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <!-- Accessible Skip Navigation Link -->
+  <a href="#main-content" class="skip-link" id="skip-to-main">Skip to main content</a>
+
+  <!-- Top Navigation Bar -->
+  <header role="banner">
+    <nav class="top-nav" aria-label="Primary Application Navigation" id="app-top-nav">
+      <div class="nav-brand">
+        <a href="#dashboard" class="brand-title" id="nav-brand-logo">CROWDCON</a>
+        <div class="nav-links" role="tablist" aria-label="Main Navigation Views">
+          <button role="tab" aria-selected="true" aria-controls="view-dashboard" class="nav-tab-btn active" id="tab-dashboard" data-view="dashboard">Dashboard</button>
+          <button role="tab" aria-selected="false" aria-controls="view-map" class="nav-tab-btn" id="tab-map" data-view="map">Map View</button>
+          <button role="tab" aria-selected="false" aria-controls="view-analytics" class="nav-tab-btn" id="tab-analytics" data-view="analytics">Risk Analytics</button>
+          <button role="tab" aria-selected="false" aria-controls="view-planner" class="nav-tab-btn" id="tab-planner" data-view="planner">AI Situation Advisor</button>
+        </div>
+      </div>
+
+      <!-- Search Box with Live Auto-filter -->
+      <div class="search-box" role="search">
+        <span class="material-symbols-outlined" aria-hidden="true">search</span>
+        <label for="location-search-input" class="visually-hidden" style="position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0);">Search Singapore Locations or MRT</label>
+        <input type="search" id="location-search-input" placeholder="SEARCH LOCATIONS OR MRT..." autocomplete="off">
+      </div>
+
+      <!-- Top Right Action Controls -->
+      <div class="nav-actions">
+        <button class="nav-icon-btn" id="btn-toggle-notifications" aria-label="View Active Alerts" title="Active Alerts">
+          <span class="material-symbols-outlined" aria-hidden="true">notifications</span>
+        </button>
+        <button class="nav-icon-btn" id="btn-open-gemini-quick" aria-label="Open AI Trip Assistant" title="AI Trip Assistant">
+          <span class="material-symbols-outlined" aria-hidden="true">psychology</span>
+        </button>
+        <div class="profile-avatar" title="User: SG-Command Alpha" aria-label="Command Center Operator">
+          <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuBFgZFAQYf9Us2Fhytb0htPxyj_m_P6qtWVFP8840_POsj9bUoMHaY0PlpOFy5pYUzqCXMQ5H52_OGVboI2LLtPFcy_ZR4D9LCJcZ1aQjSrqVdYb02C-tK3mUMOrdjCOMofec8eAFbftxnO5wk-1jqFzVVU6pBt4U1xRXiLdSQeM8TM2gZuT-0gMxj1vs7GTCEMbkUbeJDLrW7voHGCMFUzRcaL5XddaLvamb_EYWVoWs1BdohrKeKK" alt="Profile avatar">
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Live Announcer Region for Screen Readers -->
+  <div id="screen-reader-announcer" class="visually-hidden" aria-live="polite" aria-atomic="true" style="position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0);"></div>
+
+  <div class="app-container">
+    <div class="main-layout">
+      <!-- Side Navigation Bar (Desktop) -->
+      <aside class="side-nav" aria-label="Command Center Controls" id="command-side-nav">
+        <div class="side-nav-header">
+          <div class="side-nav-brand-icon">
+            <span class="material-symbols-outlined" aria-hidden="true">radar</span>
+          </div>
+          <h2 class="side-nav-title">SG-CORE</h2>
+          <p class="side-nav-subtitle">Risk Management Unit</p>
+        </div>
+
+        <button class="btn-launch-alert" id="btn-launch-alert-side">
+          <span class="material-symbols-outlined" aria-hidden="true">warning</span>
+          LAUNCH ADVISORY
+        </button>
+
+        <ul class="side-menu-list">
+          <li>
+            <button class="side-menu-btn active" id="side-btn-dashboard" data-view="dashboard">
+              <span class="material-symbols-outlined" aria-hidden="true">sensors</span>
+              Live Feed
+            </button>
+          </li>
+          <li>
+            <button class="side-menu-btn" id="side-btn-map" data-view="map">
+              <span class="material-symbols-outlined" aria-hidden="true">map</span>
+              Map View
+            </button>
+          </li>
+          <li>
+            <button class="side-menu-btn" id="side-btn-analytics" data-view="analytics">
+              <span class="material-symbols-outlined" aria-hidden="true">trending_up</span>
+              Risk Forecast
+            </button>
+          </li>
+          <li>
+            <button class="side-menu-btn" id="side-btn-planner" data-view="planner">
+              <span class="material-symbols-outlined" aria-hidden="true">auto_awesome</span>
+              AI Situation Advisor
+            </button>
+          </li>
+        </ul>
+
+        <div class="side-nav-footer">
+          <button class="side-footer-link" id="btn-help-center">
+            <span class="material-symbols-outlined" aria-hidden="true">help</span>
+            Help & Guidelines
+          </button>
+          <button class="side-footer-link" id="btn-data-freshness">
+            <span class="material-symbols-outlined" aria-hidden="true">check_circle</span>
+            Data: Live LTA/NEA
+          </button>
+        </div>
+      </aside>
+
+      <!-- Main Content Area -->
+      <main id="main-content" class="main-layout flex-1" tabindex="-1">
+        
+        <!-- ===================================================================
+             VIEW 1: DASHBOARD / LIVE FEED
+             =================================================================== -->
+        <section id="view-dashboard" class="view-content active" role="tabpanel" aria-labelledby="tab-dashboard">
+          <header class="view-header">
+            <h1 class="font-headline-lg">Active Crowd Risks</h1>
+            <p>Real-time telemetry from Singapore's transport nodes and public spaces. High anomaly detection currently active in Central Region.</p>
+          </header>
+
+          <div class="bento-grid">
+            <!-- Main Hero Status Card -->
+            <article class="brutalist-card col-8" id="card-hero-status">
+              <div class="card-header bg-primary">
+                <span class="font-label-sm">SYSTEM STATUS</span>
+                <span style="display:flex; align-items:center; gap:8px; font-weight:800;">
+                  <span class="status-pill critical">ELEVATED RISK</span>
+                </span>
+              </div>
+              <div class="card-body">
+                <h2 class="font-display-xl" id="hero-location-title" style="margin-bottom:12px;">Orchard Road Corridor</h2>
+                <p class="font-body-lg" id="hero-location-desc" style="color:var(--color-on-surface-variant); margin-bottom:20px;">
+                  Pedestrian density exceeding comfortable limits by 45%. Expected to peak in 30 minutes due to sudden rain showers diverting foot traffic indoors.
+                </p>
+                <div class="metrics-row">
+                  <div class="metric-badge-box neon-green">
+                    <span class="metric-label">CROWD DENSITY</span>
+                    <span class="metric-val" id="hero-density-val">8.2<span style="font-size:1.25rem;">/10</span></span>
+                  </div>
+                  <div class="metric-badge-box crimson-red">
+                    <span class="metric-label">FLOW RATE</span>
+                    <span class="metric-val" id="hero-flow-val">Slow</span>
+                  </div>
+                  <div class="metric-badge-box electric-blue">
+                    <span class="metric-label">RECOMMENDED MODE</span>
+                    <span class="metric-val" id="hero-mode-val" style="font-size:1.5rem;">MRT (Underground)</span>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <!-- Weather Impact Card -->
+            <article class="brutalist-card col-4 weather-hero-card" id="card-weather-impact">
+              <div class="card-header bg-secondary">
+                <span class="font-label-sm">WEATHER IMPACT</span>
+                <span class="status-pill warning">NEA NOWCAST</span>
+              </div>
+              <div class="card-body">
+                <div class="weather-header-row">
+                  <div>
+                    <span class="material-symbols-outlined weather-icon-symbol" id="weather-main-icon">thunderstorm</span>
+                    <h3 class="font-headline-lg" id="weather-main-condition" style="line-height:1;">Heavy Rain</h3>
+                  </div>
+                  <span class="weather-temp" id="weather-main-temp">28°</span>
+                </div>
+                <p class="font-body-lg" id="weather-main-impact" style="font-weight:700;">
+                  Sudden downpours causing localized sheltering behavior at MRT entrances. +15% strain on covered walkways.
+                </p>
+                <div class="truth-notice-box" style="margin-top:16px;">
+                  Source: NEA Singapore 2-Hour Nowcast • Central Station
+                </div>
+              </div>
+            </article>
+
+            <!-- Critical Hotspots List -->
+            <article class="brutalist-card col-4" id="card-critical-hotspots">
+              <div class="card-header bg-dark">
+                <span class="font-label-sm">CRITICAL HOTSPOTS</span>
+                <span class="font-label-sm">TRANSIT & VENUES</span>
+              </div>
+              <ul class="hotspot-list" id="hotspot-items-container">
+                <li class="hotspot-item active" data-location="Orchard Road">
+                  <div>
+                    <span class="hotspot-item-title">Orchard Road</span>
+                    <span class="hotspot-item-type">Shopping Corridor / Transit</span>
+                  </div>
+                  <span class="status-pill critical">HIGH 4/5</span>
+                </li>
+                <li class="hotspot-item" data-location="Dhoby Ghaut MRT">
+                  <div>
+                    <span class="hotspot-item-title">Dhoby Ghaut MRT</span>
+                    <span class="hotspot-item-type">Major Interchange</span>
+                  </div>
+                  <span class="status-pill critical">HIGH 4/5</span>
+                </li>
+                <li class="hotspot-item" data-location="Marina Bay Sands">
+                  <div>
+                    <span class="hotspot-item-title">Marina Bay Sands</span>
+                    <span class="hotspot-item-type">Event Space / Bayfront</span>
+                  </div>
+                  <span class="status-pill warning">MEDIUM 3/5</span>
+                </li>
+                <li class="hotspot-item" data-location="Bugis Junction">
+                  <div>
+                    <span class="hotspot-item-title">Bugis Junction</span>
+                    <span class="hotspot-item-type">Mall / Transit Hub</span>
+                  </div>
+                  <span class="status-pill warning">MEDIUM 3/5</span>
+                </li>
+                <li class="hotspot-item" data-location="Singapore Botanic Gardens">
+                  <div>
+                    <span class="hotspot-item-title">Botanic Gardens</span>
+                    <span class="hotspot-item-type">Green POI (Recommended)</span>
+                  </div>
+                  <span class="status-pill stable">QUIET 1/5</span>
+                </li>
+              </ul>
+            </article>
+
+            <!-- Quick Actions Card -->
+            <article class="brutalist-card col-8" id="card-quick-actions">
+              <div class="card-header bg-primary">
+                <span class="font-label-sm">QUICK ACTIONS</span>
+                <span class="font-label-sm">TACTICAL PROTOCOLS</span>
+              </div>
+              <div class="card-body">
+                <div class="quick-actions-grid">
+                  <button class="action-btn-card" id="btn-quick-plan-trip">
+                    <span class="material-symbols-outlined" style="color:var(--color-primary);" aria-hidden="true">explore</span>
+                    <div>
+                      <span class="action-title">AI Day-Trip Mode Advisor</span>
+                      <span class="action-desc">Compare MRT vs Bus vs Taxi for low crowd</span>
+                    </div>
+                  </button>
+
+                  <button class="action-btn-card" id="btn-quick-public-advisory">
+                    <span class="material-symbols-outlined" style="color:var(--color-primary);" aria-hidden="true">campaign</span>
+                    <div>
+                      <span class="action-title">Issue Public Advisory</span>
+                      <span class="action-desc">Broadcast to digital boards</span>
+                    </div>
+                  </button>
+
+                  <button class="action-btn-card" id="btn-quick-dispatch-team">
+                    <span class="material-symbols-outlined" style="color:var(--color-primary);" aria-hidden="true">groups</span>
+                    <div>
+                      <span class="action-title">Dispatch Marshall Team</span>
+                      <span class="action-desc">Request ground crowd support</span>
+                    </div>
+                  </button>
+
+                  <button class="action-btn-card highlight" id="btn-quick-activate-diversion">
+                    <span class="material-symbols-outlined" style="color:var(--color-on-secondary-fixed);" aria-hidden="true">alt_route</span>
+                    <div>
+                      <span class="action-title">Activate Diversion Protocol Alpha</span>
+                      <span class="action-desc">Reroute pedestrian traffic at Orchard</span>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <!-- ===================================================================
+             VIEW 2: MAP VIEW
+             =================================================================== -->
+        <section id="view-map" class="view-content" role="tabpanel" aria-labelledby="tab-map">
+          <!-- Interactive Map Container -->
+          <div class="map-canvas-container" id="map-container">
+            <div id="singapore-map" role="application" aria-label="Interactive Singapore Crowd & Transit Map"></div>
+
+            <!-- Floating Action Overlay Controls -->
+            <div class="map-floating-controls">
+              <button class="map-ctrl-btn" id="btn-map-layer-mrt" title="Toggle MRT Nodes" aria-label="Toggle MRT Stations Layer">
+                <span class="material-symbols-outlined" aria-hidden="true">train</span>
+              </button>
+              <button class="map-ctrl-btn" id="btn-map-layer-weather" title="Toggle Weather Overlay" aria-label="Toggle Weather Overlay">
+                <span class="material-symbols-outlined" aria-hidden="true">thunderstorm</span>
+              </button>
+              <button class="map-ctrl-btn" id="btn-map-zoom-in" title="Zoom In" aria-label="Zoom In">
+                <span class="material-symbols-outlined" aria-hidden="true">add</span>
+              </button>
+              <button class="map-ctrl-btn" id="btn-map-zoom-out" title="Zoom Out" aria-label="Zoom Out">
+                <span class="material-symbols-outlined" aria-hidden="true">remove</span>
+              </button>
+              <button class="map-ctrl-btn" id="btn-map-recenter" title="Recenter Singapore" aria-label="Recenter Map on Singapore">
+                <span class="material-symbols-outlined" aria-hidden="true">my_location</span>
+              </button>
+            </div>
+
+            <!-- Map Legend Box -->
+            <div class="map-legend-box" id="map-legend">
+              <h4>Singapore Map Legend</h4>
+              <div class="legend-row">
+                <div class="legend-indicator" style="background-color:var(--color-error);"></div>
+                <span>High Platform Crowding (4-5/5)</span>
+              </div>
+              <div class="legend-row">
+                <div class="legend-indicator" style="background-color:var(--color-secondary-fixed);"></div>
+                <span>Moderate Busyness (2-3/5)</span>
+              </div>
+              <div class="legend-row">
+                <div class="legend-indicator" style="background-color:var(--color-primary);"></div>
+                <span>Low / Quiet POI (1/5)</span>
+              </div>
+              <div class="truth-notice-box" style="margin-top:6px;">
+                Platform dwell telemetry (LTA DataMall)
+              </div>
+            </div>
+          </div>
+
+          <!-- Contextual Location Details Panel (Right Sidebar) -->
+          <section class="location-details-sidebar" aria-label="Selected Location Telemetry" id="location-details-panel">
+            <div class="location-details-header">
+              <div class="details-title-row">
+                <h3 class="font-headline-md" style="text-transform:uppercase; letter-spacing:-0.02em;">LOCATION DETAILS</h3>
+                <span class="status-pill live-badge" id="details-live-badge">LIVE</span>
+              </div>
+              <p class="font-label-sm" id="details-station-code" style="color:var(--color-on-surface-variant); font-weight:800;">
+                NS22 • ORCHARD STATION
+              </p>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="details-stats-section">
+              <div class="stat-box-large density-danger" id="details-stat-density-box">
+                <span class="metric-label" style="letter-spacing:0.1em;">PLATFORM DENSITY</span>
+                <span class="stat-number" id="details-density-percent">92%</span>
+                <span class="font-label-sm" style="margin-top:4px;">Crowd Index: High (4.6/5)</span>
+              </div>
+
+              <div class="stat-box-large" id="details-stat-flow-box">
+                <span class="metric-label" style="letter-spacing:0.1em;">ESTIMATED FLOW RATE</span>
+                <span class="stat-number" id="details-flow-rate">4.2k<span style="font-size:1.75rem;">/hr</span></span>
+                <span class="font-label-sm" style="margin-top:4px;">Gantry throughput</span>
+              </div>
+            </div>
+
+            <!-- Active Alerts -->
+            <div class="details-alerts-section">
+              <h4 class="font-label-sm" style="background-color:var(--color-on-background); color:var(--color-surface); display:inline-block; padding:6px 12px; margin-bottom:16px;">
+                ACTIVE ALERTS
+              </h4>
+
+              <div id="details-alerts-list">
+                <div class="alert-item-card critical">
+                  <span class="alert-badge-corner">CRITICAL</span>
+                  <p class="font-headline-md" style="font-size:1.125rem; margin-bottom:6px; text-transform:uppercase;">Platform overcrowding detected.</p>
+                  <p class="font-body-md" style="color:var(--color-on-surface-variant);">Northbound platform density exceeds safe limits. Dispersal protocols recommended.</p>
+                </div>
+
+                <div class="alert-item-card warning">
+                  <span class="alert-badge-corner">WARNING</span>
+                  <p class="font-headline-md" style="font-size:1.125rem; margin-bottom:6px; text-transform:uppercase;">Escalator A malfunction.</p>
+                  <p class="font-body-md" style="color:var(--color-on-surface-variant);">Maintenance crew dispatched. Bottleneck forming at Exit B.</p>
+                </div>
+              </div>
+
+              <div class="truth-notice-box" style="margin-top:12px;">
+                Updated 1 min ago • LTA Real-time Train Telemetry
+              </div>
+            </div>
+
+            <!-- Action Area -->
+            <div class="details-action-area">
+              <button class="btn-broadcast" id="btn-broadcast-warning">
+                <span class="material-symbols-outlined" style="font-size:1.75rem;" aria-hidden="true">podcasts</span>
+                BROADCAST WARNING
+              </button>
+            </div>
+          </section>
+        </section>
+
+        <!-- ===================================================================
+             VIEW 3: RISK ANALYTICS
+             =================================================================== -->
+        <section id="view-analytics" class="view-content" role="tabpanel" aria-labelledby="tab-analytics">
+          <header class="view-header">
+            <h1 class="font-headline-lg">Risk Forecast</h1>
+            <p>Comprehensive analysis of historical crowd densities and predictive modeling for high-risk zones over the next 72 hours.</p>
+          </header>
+
+          <div class="bento-grid">
+            <!-- Threat Level KPI -->
+            <article class="brutalist-card col-4" id="card-threat-level">
+              <div class="card-header bg-error">
+                <span class="font-label-sm">CURRENT THREAT LEVEL</span>
+                <span class="material-symbols-outlined" aria-hidden="true">warning</span>
+              </div>
+              <div class="card-body" style="background-color:var(--color-error-container); text-align:center; justify-content:center; align-items:center;">
+                <span class="font-display-xl" style="color:var(--color-on-error-container); line-height:1;">ELEVATED</span>
+                <div style="background-color:var(--color-surface); border:var(--border-thick) solid var(--color-on-background); padding:12px; margin-top:20px;">
+                  <p class="font-body-md" style="font-weight:700; color:var(--color-on-error-container);">
+                    Expected surge in Zone B (Orchard) between 18:00 - 21:00.
+                  </p>
+                </div>
+              </div>
+            </article>
+
+            <!-- 12-Month Historical Density Stepped Chart -->
+            <article class="brutalist-card col-8" id="card-historical-chart">
+              <div class="card-header bg-primary">
+                <span class="font-label-sm">12-MONTH HISTORICAL DENSITY</span>
+                <span class="material-symbols-outlined" aria-hidden="true">bar_chart</span>
+              </div>
+              <div class="chart-container-card">
+                <canvas id="historicalChart" aria-label="12-month historical crowd density stepped line chart"></canvas>
+              </div>
+            </article>
+
+            <!-- Predictive Heatmap Block -->
+            <article class="brutalist-card col-7" id="card-predictive-heatmap">
+              <div class="card-header bg-secondary">
+                <span class="font-label-sm">PREDICTIVE HEATMAP (NEXT 24H)</span>
+                <div style="display:flex; gap:8px;">
+                  <button class="status-pill live-badge" id="btn-heatmap-all" style="padding:4px 8px; cursor:pointer;">ALL</button>
+                  <button class="status-pill stable" id="btn-heatmap-mrt" style="padding:4px 8px; cursor:pointer;">MRT</button>
+                </div>
+              </div>
+              <div class="card-body" style="padding:0; position:relative; min-height:280px; display:flex; align-items:center; justify-content:center; background-color:#2a2a2a;">
+                <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuAd2Ode3B2BOJa5yynR4Yoch_V8qnKwMHZ7XKoxI1uDyd2abE5Lfby_qF096t6mS9hm-YWE6ogpzVoAHNYHUYLdpvjIJ-2THNSmwncOAqZy8ADoy7JfH-1Zf8qw8aNip_Grr1WCe-3pSjvpFMPA_VG3oE2DD2XuGMxj146E4BsySryRwn4-guSIvE9ZbhtvRxt56IWbgQeRT7tJEUxx6SZB3-_J5ZurbVWTmiER0ZHPKtcVer1xNUTL" alt="Topographical predictive heatmap visualization" style="width:100%; height:100%; object-fit:cover; filter:grayscale(100%) contrast(150%);">
+                
+                <div style="position:absolute; bottom:16px; left:16px; background:var(--color-surface-bright); border:var(--border-thick) solid var(--color-on-background); padding:12px; box-shadow:var(--shadow-md);">
+                  <h4 class="font-label-sm" style="border-bottom:var(--border-thick) solid var(--color-on-background); padding-bottom:4px; margin-bottom:8px;">INTENSITY</h4>
+                  <div class="legend-row">
+                    <div class="legend-indicator" style="background:var(--color-error);"></div>
+                    <span>High Risk</span>
+                  </div>
+                  <div class="legend-row">
+                    <div class="legend-indicator" style="background:var(--color-secondary-fixed);"></div>
+                    <span>Med Risk</span>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <!-- Zone Breakdown Table -->
+            <article class="brutalist-card col-5" id="card-zone-table">
+              <div class="card-header bg-dark">
+                <span class="font-label-sm">ZONE RISK INDEX</span>
+                <span class="material-symbols-outlined" aria-hidden="true">list_alt</span>
+              </div>
+              <div class="zone-table-container custom-scrollbar">
+                <table class="brutalist-table" id="zone-risk-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">Zone</th>
+                      <th scope="col">Vol</th>
+                      <th scope="col">Trend</th>
+                      <th scope="col">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr class="critical-row">
+                      <td>Z-Alpha (Orchard)</td>
+                      <td>8,420</td>
+                      <td style="color:var(--color-error);"><span class="material-symbols-outlined" style="font-size:1rem;" aria-hidden="true">arrow_upward</span> 12%</td>
+                      <td><span class="status-pill critical">CRITICAL</span></td>
+                    </tr>
+                    <tr>
+                      <td>Z-Beta (Marina Bay)</td>
+                      <td>5,100</td>
+                      <td><span class="material-symbols-outlined" style="font-size:1rem;" aria-hidden="true">arrow_right</span> 2%</td>
+                      <td><span class="status-pill warning">STABLE</span></td>
+                    </tr>
+                    <tr class="critical-row">
+                      <td>Z-Gamma (Dhoby Ghaut)</td>
+                      <td>9,200</td>
+                      <td style="color:var(--color-error);"><span class="material-symbols-outlined" style="font-size:1rem;" aria-hidden="true">arrow_upward</span> 18%</td>
+                      <td><span class="status-pill critical">CRITICAL</span></td>
+                    </tr>
+                    <tr>
+                      <td>Z-Delta (Botanic Gdns)</td>
+                      <td>2,400</td>
+                      <td style="color:var(--color-primary);"><span class="material-symbols-outlined" style="font-size:1rem;" aria-hidden="true">arrow_downward</span> 5%</td>
+                      <td><span class="status-pill stable">LOW</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <!-- ===================================================================
+             VIEW 4: AI SITUATION ADVISOR (Dedicated Screen & Drawer)
+             =================================================================== -->
+        <section id="view-planner" class="view-content" role="tabpanel" aria-labelledby="tab-planner">
+          <header class="view-header">
+            <h1 class="font-headline-lg">Gemini Crowd & Situation Advisor</h1>
+            <p>Real-time AI situational intelligence, transit density telemetry, and NEA weather impact briefings for Singapore nodes.</p>
+          </header>
+
+          <div class="bento-grid">
+            <!-- Situation Query Form -->
+            <article class="brutalist-card col-5">
+              <div class="card-header bg-primary">
+                <span class="font-label-sm">SITUATION QUERY</span>
+                <span class="material-symbols-outlined" aria-hidden="true">tune</span>
+              </div>
+              <div class="card-body">
+                <form id="trip-planner-form">
+                  <div class="form-group" style="margin-bottom:16px;">
+                    <label for="planner-dest-select" class="form-label">Target Zone / Node</label>
+                    <select id="planner-dest-select" class="form-control">
+                      <option value="Orchard Road Corridor">Orchard Road Corridor (Shopping & MRT)</option>
+                      <option value="Singapore Botanic Gardens">Singapore Botanic Gardens (Tranquil Green)</option>
+                      <option value="Marina Bay Sands & Bayfront">Marina Bay Sands & Bayfront (Sightseeing)</option>
+                      <option value="Dhoby Ghaut Interchange">Dhoby Ghaut Interchange (Transit Node)</option>
+                      <option value="Bugis Junction & Kampong Glam">Bugis Junction & Kampong Glam (Heritage & Retail)</option>
+                      <option value="Sentosa Island Boardwalk">Sentosa Island Boardwalk (Leisure)</option>
+                      <option value="Chinatown Heritage Precinct">Chinatown Heritage Precinct (Food & Culture)</option>
+                      <option value="Jurong Lake Gardens">Jurong Lake Gardens (West Regional Oasis)</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group" style="margin-bottom:16px;">
+                    <label for="planner-mode-select" class="form-label">Transit Mode & Route</label>
+                    <select id="planner-mode-select" class="form-control">
+                      <option value="MRT">MRT (Underground / Fixed Schedule)</option>
+                      <option value="Public Bus">Public Bus (Surface / Scenic)</option>
+                      <option value="Taxi / Grab">Taxi / Ride-hailing</option>
+                      <option value="Walking / Active Mobility">Walking / Park Connector</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group" style="margin-bottom:20px;">
+                    <label for="planner-intent-input" class="form-label">Situation Focus / Congestion Query</label>
+                    <input type="text" id="planner-intent-input" class="form-control" placeholder="e.g., Analyze crowd risk, shelter capacity and congestion bottlenecks" value="Analyze crowd risk, shelter capacity and congestion bottlenecks">
+                  </div>
+
+                  <button type="submit" class="btn-broadcast" id="btn-run-ai-analysis">
+                    <span class="material-symbols-outlined" aria-hidden="true">auto_awesome</span>
+                    RUN SITUATION ANALYSIS
+                  </button>
+                  <p style="font-size:0.75rem; color:var(--color-on-surface-variant); margin-top:12px; font-weight:700;">
+                    API Key Note: Set <code style="background:var(--color-surface-container); padding:2px 4px;">GEMINI_API_KEY</code> directly in Vercel Project Settings -> Environment Variables.
+                  </p>
+                </form>
+              </div>
+            </article>
+
+            <!-- Planner Output Display -->
+            <article class="brutalist-card col-7">
+              <div class="card-header bg-secondary">
+                <span class="font-label-sm">LIVE AI RECOMMENDATION</span>
+                <span class="status-pill live-badge" id="ai-status-indicator">READY</span>
+              </div>
+              <div class="card-body" id="planner-results-wrapper">
+                <div class="insight-result-container" id="planner-output-card">
+                  <div class="insight-section">
+                    <span class="font-label-sm" style="color:var(--color-primary); font-weight:800;">EXECUTIVE RECOMMENDATION</span>
+                    <p class="font-body-lg" id="ai-rec-text" style="margin-top:4px; font-weight:700;">
+                      Click "GENERATE AI DAY-TRIP PLAN" to analyze real-time Singapore transit and weather conditions.
+                    </p>
+                  </div>
+
+                  <div class="insight-section">
+                    <span class="font-label-sm" style="color:var(--color-on-background); font-weight:800;">TRANSPORT MODE COMPARISON</span>
+                    <p class="font-body-md" id="ai-transport-text" style="margin-top:4px;">
+                      Evaluates MRT platform dwell vs bus road traffic and taxi surge pricing.
+                    </p>
+                  </div>
+
+                  <div class="insight-section">
+                    <span class="font-label-sm" style="color:var(--color-error); font-weight:800;">SHORT-TERM CROWD FORECAST</span>
+                    <p class="font-body-md" id="ai-forecast-text" style="margin-top:4px;">
+                      Predicts platform and corridor volume over the next 1-2 hours.
+                    </p>
+                  </div>
+
+                  <div class="truth-notice-box" id="ai-truth-box">
+                    Source: Verified LTA DataMall & NEA Singapore API Telemetry
+                  </div>
+                </div>
+              </div>
+            </article>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toast-container" aria-live="assertive"></div>
+
+  <!-- Footer -->
+  <footer class="app-footer" role="contentinfo">
+    <div>
+      <span class="footer-brand">CROWDCON</span>
+      <p class="footer-copy">© 2026 CROWDCON ANALYTICS • SINGAPORE DAY-TRIP PLANNING</p>
+    </div>
+    <ul class="footer-links">
+      <li><a href="#" class="footer-link" id="footer-privacy">Privacy Protocol</a></li>
+      <li><a href="#" class="footer-link" id="footer-guidelines">Operational Guidelines</a></li>
+      <li><a href="#" class="footer-link" id="footer-apidocs">API Docs (LTA / NEA)</a></li>
+    </ul>
+  </footer>
+
+  <!-- External Libraries: Leaflet JS & Chart.js -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <!-- Core Application Script (Vanilla JavaScript ES Module) -->
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

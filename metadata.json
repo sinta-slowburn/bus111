@@ -1,0 +1,10 @@
+{
+  "name": "Remix CROWDCON - Singapore Crowd \u0026 Day-Trip Planner",
+  "description": "Mobile-responsive Singapore day-trip and crowd risk planning application with real-time transit telemetry, localized weather nowcasting, busyness indexing, and Gemini-powered travel insights in Neo-Brutalist design.",
+  "requestFramePermissions": [
+    "geolocation"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
